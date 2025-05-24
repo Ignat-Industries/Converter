@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ignat Convertor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --gold: #B4975A;
+            --steel: #333F42;
+            --black: #232020;
+            --white: #fff;
+            --table-bg: #3d474c;
+            --table-header: #b4975a;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', 'Segoe UI', 'Arial', sans-serif;
+            background: var(--steel);
+            color: var(--white);
+            min-height: 100vh;
+        }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+        }
+        .sidebar {
+            width: 220px;
+            min-width: 160px;
+            background: var(--black);
+            color: var(--gold);
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+            border-right: 3px solid var(--gold);
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 10;
+        }
+        .sidebar h2 {
+            font-size: 2.3rem;
+            font-weight: 900;
+            color: var(--gold);
+            background: var(--black);
+            margin: 0;
+            padding: 2.2rem 0 1.2rem 0;
+            text-align: center;
+            letter-spacing: 3px;
+            border-bottom: 1px solid var(--gold);
+            text-transform: uppercase;
+            font-family: 'Montserrat', 'Segoe UI', 'Arial', sans-serif;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 2rem 0 0 0;
+            padding: 0 0.5rem;
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--gold);
+            font-size: 1.25rem;
+            padding: 1.1rem 1.2rem;
+            text-align: left;
+            border-radius: 8px 0 0 8px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            letter-spacing: 1px;
+        }
+        .menu-btn.active, .menu-btn:hover {
+            background: var(--gold);
+            color: var(--steel);
+            font-weight: bold;
+        }
+        .main-content {
+            margin-left: 220px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .converter-block {
+            background: var(--table-bg);
+            border-radius: 18px;
+            box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
+            padding: 2.5rem 2.5rem 2.5rem 2.5rem;
+            margin: 3rem 0 0 0;
+            width: 100%;
+            max-width: 1500px;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+        .converter-block h3 {
+            color: var(--gold);
+            margin: 0 0 1.5rem 0;
+            font-size: 2.3rem;
+            text-align: center;
+            letter-spacing: 2px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-family: 'Montserrat', 'Segoe UI', 'Arial', sans-serif;
+        }
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            justify-content: center;
+        }
+        .input-row label {
+            font-size: 1.2rem;
+            color: var(--gold);
+            min-width: 90px;
+        }
+        .input-row input[type="number"] {
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            border: 2px solid var(--gold);
+            background: var(--black);
+            color: var(--white);
+            font-size: 1.3rem;
+            outline: none;
+            width: 180px;
+            transition: border 0.2s;
+        }
+        .input-row input[type="number"]:focus {
+            border: 2px solid var(--gold);
+        }
+        .input-row .unit-symbol {
+            font-size: 1.2rem;
+            color: var(--gold);
+            font-weight: bold;
+        }
+        .columns-table-wrap {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        .styled-table {
+            width: auto;
+            background: var(--table-bg);
+            border-radius: 12px;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 0 auto;
+            box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+        }
+        .styled-table th, .styled-table td {
+            padding: 0.8rem 0.7rem;
+            text-align: left;
+        }
+        .styled-table th {
+            background: var(--table-header);
+            color: var(--steel);
+            font-size: 1.13rem;
+            font-weight: bold;
+            border-bottom: 2px solid var(--gold);
+        }
+        .styled-table td {
+            font-size: 1.13rem;
+        }
+        .styled-table .unit-symbol, .styled-table .unit-en {
+            color: var(--gold);
+            font-weight: 600;
+        }
+        .styled-table .unit-value {
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .styled-table .unit-name {
+            font-weight: 600;
+        }
+        /* Вертикальные разделители между столбцами */
+        .styled-table td.col-border, .styled-table th.col-border {
+            border-left: 1px solid #fff;
+        }
+        @media (max-width: 1200px) {
+            .converter-block {
+                max-width: 99vw;
+                padding: 1.2rem 0.5rem 1rem 0.5rem;
+            }
+            .styled-table th, .styled-table td {
+                font-size: 1rem;
+                padding: 0.6rem 0.4rem;
+            }
+        }
+        @media (max-width: 900px) {
+            .columns-table-wrap {
+                overflow-x: auto;
+            }
+            .styled-table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>IGNAT<br>CONVERTOR</h2>
+        <nav class="menu">
+            <button class="menu-btn active" data-block="length">Длина</button>
+            <button class="menu-btn" data-block="mass">Масса</button>
+            <button class="menu-btn" data-block="time">Время</button>
+        </nav>
+    </aside>
+    <main class="main-content">
+        <section class="converter-block" id="block-length">
+            <h3>Конвертер длины</h3>
+            <div class="input-row">
+                <label for="input-length">Значение:</label>
+                <input type="number" id="input-length" value="1" step="any" min="0">
+                <span class="unit-symbol" id="length-base-symbol">м</span>
+            </div>
+            <div class="columns-table-wrap" id="columns-length-wrap"></div>
+        </section>
+        <section class="converter-block" id="block-mass" style="display:none;">
+            <h3>Конвертер массы</h3>
+            <div class="input-row">
+                <label for="input-mass">Значение:</label>
+                <input type="number" id="input-mass" value="1" step="any" min="0">
+                <span class="unit-symbol" id="mass-base-symbol">кг</span>
+            </div>
+            <div class="columns-table-wrap" id="columns-mass-wrap"></div>
+        </section>
+        <section class="converter-block" id="block-time" style="display:none;">
+            <h3>Конвертер времени</h3>
+            <div class="input-row">
+                <label for="input-time">Значение:</label>
+                <input type="number" id="input-time" value="1" step="any" min="0">
+                <span class="unit-symbol" id="time-base-symbol">с</span>
+            </div>
+            <div class="columns-table-wrap" id="columns-time-wrap"></div>
+        </section>
+    </main>
+    <script>
+        // Данные единиц
+        const units = {
+            length: [
+                { name: "метр", symbol: "м", en: "m", factor: 1 },
+                { name: "декаметр", symbol: "дам", en: "dam", factor: 1e1 },
+                { name: "гектометр", symbol: "гм", en: "hm", factor: 1e2 },
+                { name: "километр", symbol: "км", en: "km", factor: 1e3 },
+                { name: "мегаметр", symbol: "Мм", en: "Mm", factor: 1e6 },
+                { name: "гигаметр", symbol: "Гм", en: "Gm", factor: 1e9 },
+                { name: "тераметр", symbol: "Тм", en: "Tm", factor: 1e12 },
+                { name: "петаметр", symbol: "Пм", en: "Pm", factor: 1e15 },
+                { name: "эксаметр", symbol: "Эм", en: "Em", factor: 1e18 },
+                { name: "зеттаметр", symbol: "Зм", en: "Zm", factor: 1e21 },
+                { name: "йоттаметр", symbol: "Им", en: "Ym", factor: 1e24 },
+                { name: "роннаметр", symbol: "Рнм", en: "Rm", factor: 1e27 },
+                { name: "кветтаметр", symbol: "Квм", en: "Qm", factor: 1e30 },
+                { name: "дециметр", symbol: "дм", en: "dm", factor: 1e-1 },
+                { name: "сантиметр", symbol: "см", en: "cm", factor: 1e-2 },
+                { name: "миллиметр", symbol: "мм", en: "mm", factor: 1e-3 },
+                { name: "микрометр", symbol: "мкм", en: "µm", factor: 1e-6 },
+                { name: "нанометр", symbol: "нм", en: "nm", factor: 1e-9 },
+                { name: "пикометр", symbol: "пм", en: "pm", factor: 1e-12 },
+                { name: "фемтометр", symbol: "фм", en: "fm", factor: 1e-15 },
+                { name: "аттометр", symbol: "ам", en: "am", factor: 1e-18 },
+                { name: "зептометр", symbol: "зм", en: "zm", factor: 1e-21 },
+                { name: "иоктометр", symbol: "им", en: "ym", factor: 1e-24 },
+                { name: "ронтометр", symbol: "рнм", en: "rm", factor: 1e-27 },
+                { name: "квектометр", symbol: "квм", en: "qm", factor: 1e-30 },
+                { name: "дюйм", symbol: "дюйм", en: "in", factor: 2.54e-2 },
+                { name: "фут", symbol: "фут", en: "ft", factor: 3.05e-1 },
+                { name: "ярд", symbol: "ярд", en: "yd", factor: 9.14e-1 },
+                { name: "миля", symbol: "миля", en: "ml", factor: 1.61e3 }
+            ],
+            mass: [
+                { name: "килограмм", symbol: "кг", en: "kg", factor: 1 },
+                { name: "микрограмм", symbol: "мкг", en: "µg", factor: 1e-9 },
+                { name: "миллиграмм", symbol: "мг", en: "mg", factor: 1e-6 },
+                { name: "грамм", symbol: "г", en: "g", factor: 1e-3 },
+                { name: "центнер", symbol: "ц", en: "q", factor: 100 },
+                { name: "тонна", symbol: "т", en: "t", factor: 1000 }
+            ],
+            time: [
+                { name: "секунда", symbol: "с", en: "s", factor: 1 },
+                { name: "минута", symbol: "мин", en: "min", factor: 1.67e-2 },
+                { name: "час", symbol: "ч", en: "h", factor: 2.78e-4 },
+                { name: "сутки", symbol: "сут", en: "d", factor: 1.16e-5 }
+            ]
+        };
+
+        function splitToColumns(arr, maxCols = 3) {
+            let n = arr.length;
+            let cols = 1;
+            if (n > 24) cols = 3;
+            else if (n > 12) cols = 2;
+            let perCol = Math.ceil(n / cols);
+            let result = [];
+            for (let i = 0; i < cols; i++) {
+                result.push(arr.slice(i * perCol, (i + 1) * perCol));
+            }
+            return result;
+        }
+
+        function renderTable(type, value) {
+            const arr = units[type];
+            const columns = splitToColumns(arr);
+            let maxRows = Math.max(...columns.map(col => col.length));
+            let html = `<table class="styled-table"><thead><tr>`;
+            for (let i = 0; i < columns.length; i++) {
+                html += `
+                    <th${i > 0 ? ' class="col-border"' : ''}>Единица</th>
+                    <th>Обозначение</th>
+                    <th>Амир</th>
+                    <th>Значение</th>
+                `;
+            }
+            html += `</tr></thead><tbody>`;
+            for (let row = 0; row < maxRows; row++) {
+                html += `<tr>`;
+                for (let col = 0; col < columns.length; col++) {
+                    let u = columns[col][row];
+                    if (u) {
+                        let base = units[type][0].factor;
+                        let val = value * (base / u.factor);
+                        let formatted = (Math.abs(val) < 1e-3 || Math.abs(val) > 1e6)
+                            ? val.toExponential(6).replace(/e\+?/, 'e')
+                            : val.toLocaleString('ru-RU', { maximumFractionDigits: 8 });
+                        html += `
+                            <td${col > 0 ? ' class="col-border unit-name"' : ' class="unit-name"'}>${u.name}</td>
+                            <td class="unit-symbol">${u.symbol}</td>
+                            <td class="unit-en">${u.en}</td>
+                            <td class="unit-value">${formatted}</td>
+                        `;
+                    } else {
+                        html += `<td${col > 0 ? ' class="col-border"' : ''}></td><td></td><td></td><td></td>`;
+                    }
+                }
+                html += `</tr>`;
+            }
+            html += `</tbody></table>`;
+            return html;
+        }
+
+        // Обработчики меню
+        document.querySelectorAll('.menu-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                let block = this.dataset.block;
+                document.querySelectorAll('.converter-block').forEach(sec => sec.style.display = 'none');
+                document.getElementById('block-' + block).style.display = '';
+            });
+        });
+
+        // Обновление таблиц при вводе
+        function updateLength() {
+            const val = parseFloat(document.getElementById('input-length').value.replace(',', '.')) || 0;
+            document.getElementById('columns-length-wrap').innerHTML = renderTable('length', val);
+        }
+        function updateMass() {
+            const val = parseFloat(document.getElementById('input-mass').value.replace(',', '.')) || 0;
+            document.getElementById('columns-mass-wrap').innerHTML = renderTable('mass', val);
+        }
+        function updateTime() {
+            const val = parseFloat(document.getElementById('input-time').value.replace(',', '.')) || 0;
+            document.getElementById('columns-time-wrap').innerHTML = renderTable('time', val);
+        }
+
+        document.getElementById('input-length').addEventListener('input', updateLength);
+        document.getElementById('input-mass').addEventListener('input', updateMass);
+        document.getElementById('input-time').addEventListener('input', updateTime);
+
+        // Инициализация
+        updateLength();
+        updateMass();
+        updateTime();
+    </script>
+</body>
+</html> 
