@@ -1,0 +1,12 @@
+{
+  "title": "单位换算器",
+  "example": "例如 5 km",
+  "toUnit": "目标单位",
+  "result": "结果",
+  "unit": "单位",
+  "symbol": "符号",
+  "value": "数值",
+  "history": "历史记录",
+  "export_excel": "Excel",
+  "export_pdf": "PDF"
+}

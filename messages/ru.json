@@ -1,0 +1,12 @@
+{
+  "title": "Конвертер единиц",
+  "example": "например 5 км",
+  "toUnit": "Целевая единица",
+  "result": "Результат",
+  "unit": "Ед.",
+  "symbol": "Симв.",
+  "value": "Значение",
+  "history": "История",
+  "export_excel": "Excel",
+  "export_pdf": "PDF"
+}

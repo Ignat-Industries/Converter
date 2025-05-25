@@ -1,0 +1,12 @@
+{
+  "title": "محول الوحدات",
+  "example": "مثال 5 كم",
+  "toUnit": "الوحدة الهدف",
+  "result": "النتيجة",
+  "unit": "وحدة",
+  "symbol": "رمز",
+  "value": "القيمة",
+  "history": "السجل",
+  "export_excel": "Excel",
+  "export_pdf": "PDF"
+}

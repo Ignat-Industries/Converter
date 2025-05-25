@@ -1,0 +1,12 @@
+{
+  "title": "単位変換",
+  "example": "例 5 km",
+  "toUnit": "変換先",
+  "result": "結果",
+  "unit": "単位",
+  "symbol": "記号",
+  "value": "値",
+  "history": "履歴",
+  "export_excel": "Excel",
+  "export_pdf": "PDF"
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Einheiten-Umrechner",
+  "example": "z. B. 5 km",
+  "toUnit": "Zieleinheit",
+  "result": "Ergebnis",
+  "unit": "Einheit",
+  "symbol": "Symbol",
+  "value": "Wert",
+  "history": "Verlauf",
+  "export_excel": "Excel",
+  "export_pdf": "PDF"
+}

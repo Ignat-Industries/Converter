@@ -1,345 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Universal Unit Converter</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Libs -->
+
+  <!-- Vue 3 -->
   <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
-  <!-- 2) Потом Vue-I18n (он ищет window.Vue) -->
+  <!-- Vue-I18n 9 (зависит от Vue) -->
   <script src="https://unpkg.com/vue-i18n@9/dist/vue-i18n.global.js"></script>
-  <!-- остальное – как было -->
+  <!-- mathjs -->
   <script src="https://cdn.jsdelivr.net/npm/mathjs@11.8.2/lib/browser/math.min.js"></script>
+  <!-- xlsx -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
-    :root{--gold:#B4975A;--steel:#333F42;--black:#232020;--white:#fff;--table-bg:#3d474c;--table-header:#b4975a}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',sans-serif;background:var(--steel);color:var(--white);padding:0.8rem}
-    .converter-container{position:relative;max-width:1200px;margin:auto;background:var(--table-bg);padding:1.4rem;border-radius:1rem;box-shadow:0 0 24px rgba(0,0,0,.35)}
-    h1{color:var(--gold);text-align:center;margin-bottom:1.3rem;font-size:1.9rem}
+    :root {
+      --gold: #B4975A;
+      --steel: #333F42;
+      --black: #232020;
+      --white: #fff;
+      --table-bg: #3d474c;
+      --table-header: #b4975a
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--steel);
+      color: var(--white);
+      padding: 0.8rem;
+    }
+    .converter-container {
+      position: relative;
+      max-width: 1200px;
+      margin: auto;
+      background: var(--table-bg);
+      padding: 1.4rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 24px rgba(0,0,0,.35);
+    }
+    h1 {
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 1.3rem;
+      font-size: 1.9rem;
+    }
     /* lang selector */
-    .lang-select{position:absolute;top:1rem;right:1rem}
-    select{appearance:none;background:var(--black);color:var(--white);border:2px solid var(--gold);border-radius:0.5rem;padding:0.5rem 2rem 0.5rem 0.8rem;font-size:1rem;cursor:pointer}
-    select option{background:var(--steel);color:var(--white)}
-    .lang-select::after{content:"\25BC";position:absolute;right:1.6rem;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--gold)}
+    .lang-select {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }
+    select {
+      appearance: none;
+      background: var(--black);
+      color: var(--white);
+      border: 2px solid var(--gold);
+      border-radius: 0.5rem;
+      padding: 0.5rem 2rem 0.5rem 0.8rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    select option {
+      background: var(--steel);
+      color: var(--white);
+    }
+    .lang-select::after {
+      content: "\25BC";
+      position: absolute;
+      right: 1.6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--gold);
+    }
     /* input row */
-    .input-row{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;align-items:center}
-    .input-row input{padding:0.8rem;font-size:1rem;min-width:240px;border:2px solid var(--gold);border-radius:0.5rem;background:var(--black);color:var(--white)}
-    .swap-btn,.btn{background:var(--black);color:var(--gold);border:2px solid var(--gold);border-radius:0.5rem;cursor:pointer;transition:background .2s}
-    .swap-btn{padding:0.6rem 0.9rem;font-size:1.1rem}
-    .btn{padding:0.6rem 1.2rem;font-size:1rem}
-    .btn:hover,.swap-btn:hover{background:var(--gold);color:var(--steel)}
-    .result{text-align:center;color:var(--gold);font-size:1.4rem;margin-top:0.8rem;word-break:break-all}
+    .input-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      align-items: center;
+    }
+    .input-row input {
+      padding: 0.8rem;
+      font-size: 1rem;
+      min-width: 240px;
+      border: 2px solid var(--gold);
+      border-radius: 0.5rem;
+      background: var(--black);
+      color: var(--white);
+    }
+    .swap-btn, .btn {
+      background: var(--black);
+      color: var(--gold);
+      border: 2px solid var(--gold);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .swap-btn {
+      padding: 0.6rem 0.9rem;
+      font-size: 1.1rem;
+    }
+    .btn {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+    }
+    .btn:hover, .swap-btn:hover {
+      background: var(--gold);
+      color: var(--steel);
+    }
+    .result {
+      text-align: center;
+      color: var(--gold);
+      font-size: 1.4rem;
+      margin-top: 0.8rem;
+      word-break: break-all;
+    }
     /* table */
-    .table-wrapper{overflow-x:auto;margin-top:1rem}
-    table{margin:auto;border-collapse:collapse;border-radius:0.8rem;overflow:hidden;min-width:600px}
-    th,td{border:1px solid var(--white);padding:0.7rem 0.9rem;white-space:nowrap;font-size:0.95rem}
-    th{background:var(--table-header);color:var(--steel);font-weight:700}
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+    table {
+      margin: auto;
+      border-collapse: collapse;
+      border-radius: 0.8rem;
+      overflow: hidden;
+      min-width: 600px;
+    }
+    th, td {
+      border: 1px solid var(--white);
+      padding: 0.7rem 0.9rem;
+      white-space: nowrap;
+      font-size: 0.95rem;
+    }
+    th {
+      background: var(--table-header);
+      color: var(--steel);
+      font-weight: 700;
+    }
     /* buttons */
-    .export-row{display:flex;gap:1rem;justify-content:center;margin-top:1rem;flex-wrap:wrap}
+    .export-row {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
     /* history */
-    .history{margin-top:2rem}
-    .history h3{color:var(--gold);font-size:1.15rem;text-align:center;margin-bottom:0.4rem}
-    .history ul{list-style:none;max-height:140px;overflow-y:auto;padding:0 0.4rem}
-    .history li{padding:0.3rem 0;border-bottom:1px solid #ffffff33;font-size:0.9rem}
-    @media(max-width:700px){h1{font-size:1.6rem}table{min-width:550px}}
+    .history {
+      margin-top: 2rem;
+    }
+    .history h3 {
+      color: var(--gold);
+      font-size: 1.15rem;
+      text-align: center;
+      margin-bottom: 0.4rem;
+    }
+    .history ul {
+      list-style: none;
+      max-height: 140px;
+      overflow-y: auto;
+      padding: 0 0.4rem;
+    }
+    .history li {
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #ffffff33;
+      font-size: 0.9rem;
+    }
+    @media(max-width: 700px) {
+      h1 { font-size: 1.6rem; }
+      table { min-width: 550px; }
+    }
   </style>
 </head>
 <body>
-<div id="app" class="converter-container">
-  <!-- Language selector -->
-  <div class="lang-select">
-    <select v-model="language">
-      <option v-for="lang in languages" :value="lang.code">{{ lang.name }}</option>
-    </select>
-  </div>
-  <h1>{{ $t('title') }}</h1>
-  <!-- Input row -->
-  <div class="input-row">
-    <input  type="text"
-            v-model="inputText"
-            :placeholder="$t('example')"
-            @input="parseInput">
-
-    <button class="swap-btn" @click="swapUnits">⇄</button>
-
-    <input  type="text"
-            v-model="targetUnit"
-            :placeholder="$t('toUnit')"
-            list="unit-suggestions">
+  <div id="app" class="converter-container">
+    <!-- Здесь у нас всё монтируется через Vue из app.js -->
+    <!-- Шаблон (template) рендерится динамически. -->
   </div>
 
-  <datalist id="unit-suggestions">
-    <option v-for="unit in unitsFlat" :value="displaySymbol(unit)">{{ displayName(unit) }} ({{ displaySymbol(unit) }})</option>
-  </datalist>
-  <!-- Result -->
-  <div class="result" v-if="convertedValue !== null">{{ $t('result') }}: {{ formattedConverted }} {{ targetUnit }}</div>  <!-- Export buttons -->
-  <div class="export-row" v-if="parsedType">
-    <button class="btn" @click="exportToExcel">Excel</button>
-    <button class="btn" @click="exportToPDF">PDF</button>
-  </div>
-  <!-- Table -->
-  <div class="table-wrapper" v-if="parsedType">
-    <table>
-      <thead><tr><th>{{ $t('unit') }}</th><th>{{ $t('symbol') }}</th><th>{{ $t('value') }}</th></tr></thead>
-      <tbody>
-        <tr v-for="unit in units[parsedType]" :key="unit.symbol_en">
-          <td>{{ displayName(unit) }}</td>
-          <td>{{ displaySymbol(unit) }}</td>
-          <td>{{ formatValue(parsedType, parsedValue, unit) }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <!-- History -->
-  <div class="history" v-if="history.length">
-    <h3>{{ $t('history') }}</h3>
-    <ul>
-      <li v-for="h in history" :key="h.id">{{ h.text }}</li>
-    </ul>
-  </div>
-</div>
-<script>
-const {jsPDF}=window.jspdf;
-const MAX_HISTORY=10;
-const bigFormat=num=>{
-  const a=Math.abs(num);
-  return(a>=1e6||a<=1e-6&&a!==0)
-    ?num.toExponential(6).replace(/e\+/,'e')
-    :num.toLocaleString(undefined,{maximumFractionDigits:12});
-};
-
-const messages = {
-  en: {
-    title:'Unit Converter', example:'e.g. 5 km', toUnit:'Target unit', result:'Result',
-    unit:'Unit', symbol:'Symbol', value:'Value', history:'History',
-    export_excel:'Excel', export_pdf:'PDF'
-  },
-  ru: {
-    title:'Конвертер единиц', example:'например 5 км', toUnit:'Целевая единица', result:'Результат',
-    unit:'Ед.', symbol:'Симв.', value:'Значение', history:'История',
-    export_excel:'Excel', export_pdf:'PDF'
-  },
-  es:{ /* ... при желании добавить */ }
-};
-
-const i18n = VueI18n.createI18n({
-  legacy:false,
-  locale:'en',
-  fallbackLocale:'en',
-  messages
-});
-
-/* helper to define unit */
-function u(en,ru,symEn,symRu,factor,aliases=[]){
-  return{names:{en,ru},symbol_en:symEn,symbol_ru:symRu,factor,aliases:[symEn,symRu,...aliases]};
-}
-
-/* units data (длина, масса, время + температура) */
-const units={
-  length:[
-    u('meter','метр','m','м',1),u('decameter','декаметр','dam','дам',1e1),
-    u('hectometer','гектометр','hm','гм',1e2),u('kilometer','километр','km','км',1e3),
-    u('megameter','мегаметр','Mm','Мм',1e6),u('gigameter','гигаметр','Gm','Гм',1e9),
-    u('terameter','тераметр','Tm','Тм',1e12),u('petameter','петаметр','Pm','Пм',1e15),
-    u('exameter','эксаметр','Em','Эм',1e18),u('zettameter','зеттаметр','Zm','Зм',1e21),
-    u('yottameter','йоттаметр','Ym','Им',1e24),u('ronnameter','роннаметр','Rm','Рнм',1e27),
-    u('quettameter','кветтаметр','Qm','Квм',1e30),u('decimeter','дециметр','dm','дм',1e-1),
-    u('centimeter','сантиметр','cm','см',1e-2),u('millimeter','миллиметр','mm','мм',1e-3),
-    u('micrometer','микрометр','µm','мкм',1e-6,['um']),u('nanometer','нанометр','nm','нм',1e-9),
-    u('picometer','пикометр','pm','пм',1e-12),u('femtometer','фемтометр','fm','фм',1e-15),
-    u('attometer','аттометр','am','ам',1e-18),u('zeptometer','зептометр','zm','зм',1e-21),
-    u('yoctometer','иоктометр','ym','им',1e-24),u('rontometer','ронтометр','rm','рнм',1e-27),
-    u('quectometer','квектометр','qm','квм',1e-30),
-    u('inch','дюйм','in','дюйм',0.0254),
-    u('foot','фут','ft','фут',0.3048),
-    u('yard','ярд','yd','ярд',0.9144),
-    u('mile','миля','mi','миля',1609.344),
-    u('nautical mile','морская миля','nmi','NM',1852)
-  ],
-  mass:[
-    u('kilogram','килограмм','kg','кг',1),
-    u('pound','фунт','lb','lb',0.45359237,['lbs']),
-    u('ounce','унция','oz','oz',0.0283495231),
-    u('metric ton','тонна','t','т',1000,['tonne']),
-    u('short ton','кор. тонна','st','st',907.18474,['ton_us']),
-    u('centner','центнер','q','ц',100),
-    u('gram','грамм','g','г',0.001),
-    u('milligram','миллиграмм','mg','мг',1e-6),
-    u('microgram','микрограмм','µg','мкг',1e-9,['ug'])
-  ],
-  time:[
-    u('second','секунда','s','с',1,['sec']),
-    u('millisecond','миллисекунда','ms','мс',1e-3),
-    u('microsecond','микросекунда','µs','мкс',1e-6,['us']),
-    u('nanosecond','наносекунда','ns','нс',1e-9),
-    u('minute','минута','min','мин',60),
-    u('hour','час','h','ч',3600,['hr']),
-    u('day','сутки','d','д',86400),
-    u('week','неделя','wk','нед',604800,['week']),
-    u('year','год','yr','год',31557600)
-  ],
-  temperature:[
-    {names:{en:'Celsius',ru:'Цельсий'},symbol_en:'°C',symbol_ru:'°C'},
-    {names:{en:'Fahrenheit',ru:'Фаренгейт'},symbol_en:'°F',symbol_ru:'°F'},
-    {names:{en:'Kelvin',ru:'Кельвин'},symbol_en:'K',symbol_ru:'K'}
-  ]
-};
-
-/* temp converters */
-const tempConv={
-  '°C':v=>({'°C':v,'°F':v*9/5+32,'K':v+273.15}),
-  '°F':v=>({'°C':(v-32)*5/9,'°F':v,'K':(v-32)*5/9+273.15}),
-  'K':v=>({'°C':v-273.15,'°F':(v-273.15)*9/5+32,'K':v})
-};
-
-const app = Vue.createApp({
-  data() {
-    return {
-      inputText: '',
-      targetUnit: '',
-      parsedValue: null,
-      parsedType: '',
-      parsedUnit: '',
-      language: 'en',          // выбранный язык
-      history: [],             // последние конверсии
-      languages: [             // список доступных языков
-        { code: 'en', name: 'English' },
-        { code: 'ru', name: 'Русский' },
-        { code: 'es', name: 'Español' },
-        { code: 'de', name: 'Deutsch' },
-        { code: 'fr', name: 'Français' },
-        { code: 'zh', name: '中文' },
-        { code: 'pt', name: 'Português' },
-        { code: 'ar', name: 'العربية' },
-        { code: 'hi', name: 'हिन्दी' },
-        { code: 'ja', name: '日本語' }
-      ]
-    };
-  },
-  computed:{
-    units(){return units;},
-    unitsFlat(){return Object.values(this.units).flat();},
-    convertedValue(){
-      if(!this.parsedType||!this.targetUnit||this.parsedValue===null)return null;
-      return this.convertToTarget(this.parsedValue,this.parsedUnit,this.targetUnit);
-    },
-    formattedConverted(){return this.convertedValue!==null?bigFormat(this.convertedValue):''}
-  },
-  methods:{
-    displayName(u){return u.names?.[this.language]||u.names?.en||'';},
-    displaySymbol(u){return this.language==='ru'?(u.symbol_ru||u.symbol_en):(u.symbol_en||u.symbol_ru);},
-
-    /* parsing input string */
-    parseInput(){
-      const txt=this.inputText.trim();
-      if(!txt)return;
-      const match=txt.match(/^(.+?)\s*([a-zA-Zа-яµ°]+)$/);
-      if(!match)return;
-      let valExpr=match[1];const unitToken=match[2];
-      let val;
-      try{val=math.evaluate(valExpr);}catch{this.parsedType='';return;}
-      // find unit by aliases
-      const found=this.unitsFlat.find(u=>u.aliases?u.aliases.includes(unitToken):false)
-        ||this.unitsFlat.find(u=>this.displaySymbol(u)===unitToken);
-      if(!found){this.parsedType='';return;}
-      this.parsedValue=val;
-      this.parsedUnit=this.displaySymbol(found);
-      this.parsedType=Object.entries(this.units).find(([k,arr])=>arr.includes(found))[0];
-      // auto-fill target if пусто
-      if(!this.targetUnit){this.targetUnit=this.parsedType==='temperature'?'K':this.displaySymbol(this.units[this.parsedType][0]);}
-    },
-
-    /* conversion */
-    convertToTarget(value,fromSym,toSym){
-      if(this.parsedType==='temperature'){
-        const table=tempConv[fromSym](value);return table[toSym];
-      }
-      const from= this.units[this.parsedType].find(u=>this.displaySymbol(u)===fromSym);
-      const to  = this.units[this.parsedType].find(u=>this.displaySymbol(u)===toSym);
-      if(!from||!to)return null;
-      return value*from.factor/to.factor;
-    },
-
-    /* formatting */
-    formatValue(type,val,unit){
-      if(type==='temperature'){
-        const table=tempConv[this.parsedUnit](val);return bigFormat(table[this.displaySymbol(unit)]);
-      }
-      const base=this.units[type].find(u=>this.displaySymbol(u)===this.parsedUnit);
-      const converted=val*base.factor/unit.factor;
-      return bigFormat(converted);
-    },
-
-    swapUnits(){const tmp=this.targetUnit;this.targetUnit=this.parsedUnit;this.parsedUnit=tmp;this.parseInput();},
-
-    /* history */
-    pushHistory(text){
-      this.history.unshift({id:Date.now(),text});
-      if(this.history.length>MAX_HISTORY)this.history.pop();
-    },
-
-    /* export */
-    exportToExcel(){
-      const ws=XLSX.utils.aoa_to_sheet([['Unit','Symbol','Value'],...this.units[this.parsedType].map(u=>[
-        this.displayName(u),this.displaySymbol(u),this.formatValue(this.parsedType,this.parsedValue,u)
-      ])]);
-      const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data');
-      XLSX.writeFile(wb,'conversion.xlsx');
-    },
-    exportToPDF(){
-      const doc=new jsPDF({orientation:'landscape'});doc.setFontSize(12);
-      doc.text(this.$t('result')+': '+this.formattedConverted+' '+this.targetUnit,14,14);
-      let y=24;
-      doc.text([this.$t('unit'),this.$t('symbol'),this.$t('value')].join('   '),14,y);
-      y+=6;
-      this.units[this.parsedType].forEach(u=>{
-        doc.text([
-          this.displayName(u),
-          this.displaySymbol(u),
-          this.formatValue(this.parsedType,this.parsedValue,u)
-        ].join('   '),14,y);
-        y+=6;
-      });
-      doc.save('conversion.pdf');
-    }
-  },
-    watch: {
-  /* Смена языка — переключаем Vue-I18n и подменяем символы */
-  language(lang) {
-    i18n.global.locale = lang;              // <-- мгновенный перевод UI
-
-    if (!this.parsedType) return;           // нет выбранной категории — ничего не делаем
-    const arr = this.units[this.parsedType];
-
-    const mapSym = sym => {
-      const u = arr.find(x =>
-        x.aliases.includes(sym) ||
-        x.symbol_en === sym ||
-        x.symbol_ru === sym
-      );
-      return u ? this.displaySymbol(u) : sym;
-    };
-
-    this.parsedUnit  = mapSym(this.parsedUnit);
-    this.targetUnit  = mapSym(this.targetUnit);
-  },
-
-  /* Запись в историю при каждом новом результате */
-  convertedValue(val) {
-    if (val == null) return;
-    this.history.unshift({
-      id: Date.now(),
-      text: `${this.inputText} → ${bigFormat(val)} ${this.targetUnit}`
-    });
-    if (this.history.length > MAX_HISTORY) this.history.pop();
-  }
-},
-
-});
-app.use(i18n);
-app.mount('#app');
-</script>
+  <!-- Подключаем наши скрипты (i18n.js и app.js) — обязательно после Vue -->
+  <script src="./i18n.js"></script>
+  <script src="./app.js" type="module"></script>
 </body>
 </html>

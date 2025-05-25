@@ -1,0 +1,12 @@
+{
+  "title": "यूनिट कनवर्टर",
+  "example": "जैसे 5 km",
+  "toUnit": "लक्ष्य इकाई",
+  "result": "परिणाम",
+  "unit": "इकाई",
+  "symbol": "प्रतीक",
+  "value": "मान",
+  "history": "इतिहास",
+  "export_excel": "Excel",
+  "export_pdf": "PDF"
+}

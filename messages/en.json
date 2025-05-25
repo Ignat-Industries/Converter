@@ -1,0 +1,12 @@
+{
+  "title": "Unit Converter",
+  "example": "e.g. 5 km",
+  "toUnit": "Target unit",
+  "result": "Result",
+  "unit": "Unit",
+  "symbol": "Symbol",
+  "value": "Value",
+  "history": "History",
+  "export_excel": "Excel",
+  "export_pdf": "PDF"
+}
