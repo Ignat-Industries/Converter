@@ -1,38 +1,36 @@
 // i18n.js
-// Создаём i18n, но пока без сообщений (messages будет пустым)
-const i18n = VueI18n.createI18n({
-  legacy: false,
-  locale: 'en',         // Базовый язык по умолчанию
-  fallbackLocale: 'en',
-  messages: {}
-});
 
-// Какие языки поддерживаем — массив кодов
-const supportedLangs = [
+// Список кодов языков, которые будем подгружать
+export const supportedLangs = [
   'en', 'ru', 'es', 'de', 'fr',
   'zh', 'pt', 'ar', 'hi', 'ja'
 ];
 
+// Создаём экземпляр i18n без сообщений (messages = {})
+export const i18n = VueI18n.createI18n({
+  legacy: false,
+  locale: 'en',         // язык по умолчанию
+  fallbackLocale: 'en', // если перевод отсутствует — fallback
+  messages: {}          // пустой объект (будем загружать динамически)
+});
+
 /**
- * Загружает JSON-файлы переводов для каждого языка и
- * записывает их в i18n глобально
+ * Загружает файлы перевода из папки `./messages/`.
+ * Для каждого языка (en, ru, es, ...) ищет `./messages/<lang>.json`.
+ * Если найден — добавляет в i18n.
  */
-async function loadMessages() {
-  // Для всех кодов lang делаем fetch('./messages/lang.json')
-  const fetchPromises = supportedLangs.map(async (lang) => {
-    const response = await fetch(`./messages/${lang}.json`);
-    const data = await response.json();
-    return { lang, data };
-  });
+export async function loadMessages() {
+  const basePath = './messages';
+  for (const lang of supportedLangs) {
+    try {
+      const response = await fetch(`${basePath}/${lang}.json`);
+      if (!response.ok) continue; // если 404 — пропускаем
 
-  // Ждём, пока все файлы загрузятся:
-  const results = await Promise.all(fetchPromises);
-
-  // Записываем переводы для каждого языка в i18n
-  for (const { lang, data } of results) {
-    i18n.global.setLocaleMessage(lang, data);
+      const data = await response.json();
+      // Записываем переводы в i18n для данного языка
+      i18n.global.setLocaleMessage(lang, data);
+    } catch (err) {
+      console.warn(`Failed to load messages for ${lang}`, err);
+    }
   }
 }
-
-// Экспортируем сам i18n и функцию loadMessages
-export { i18n, loadMessages, supportedLangs };

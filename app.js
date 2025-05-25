@@ -1,7 +1,18 @@
 // app.js
 import { i18n, loadMessages, supportedLangs } from './i18n.js';
 
-// Форматирование больших/малых чисел
+/**
+ * Фабрика для создания юнита.
+ * @param {object} names   — словарь { en:'...', ru:'...', es:'...', ... }
+ * @param {object} symbol  — словарь { en:'...', ru:'...', es:'...', ... }
+ * @param {number} factor  — коэффициент (пример: 1 для базовой)
+ * @param {string[]} aliases — алиасы (например: ['lb','lbs'])
+ */
+function makeUnit(names, symbol, factor, aliases = []) {
+  return { names, symbol, factor, aliases };
+}
+
+// Небольшая функция для форматирования больших/малых чисел
 const bigFormat = (num) => {
   const a = Math.abs(num);
   return (a >= 1e6 || (a <= 1e-6 && a !== 0))
@@ -11,26 +22,11 @@ const bigFormat = (num) => {
 
 const MAX_HISTORY = 10;
 
-/**
- * Фабрика для создания юнита.
- * @param {object} names   — словарь { en:'...', ru:'...', es:'...', ... }
- * @param {object} symbol  — словарь { en:'...', ru:'...', es:'...', ... }
- * @param {number} factor  — коэффициент (пример: 1 для базовой)
- * @param {string[]} aliases — алиасы (например, ['lb','lbs'])
- */
-function makeUnit(names, symbol, factor, aliases = []) {
-  return {
-    names,   // объект с 10 языками
-    symbol,  // объект с 10 языками
-    factor,
-    aliases
-  };
-}
-
-// Набор единиц
+// Набор единиц — часть переведена на все 10 языков (пример meter, kilometer, inch...).
+// Остальные указаны сокращённо (en + ru), вы можете дописать переводы по аналогии.
 const unitsData = {
   length: [
-    // пример: meter (полный перевод на 10 языков):
+    // Полностью переведённый пример (meter)
     makeUnit(
       {
         en: 'meter',
@@ -56,11 +52,11 @@ const unitsData = {
         hi: 'm',
         ja: 'm'
       },
-      1,     // factor
-      ['m', 'м']   // алиасы (можете расширить)
+      1,
+      ['m', 'м']
     ),
 
-    // kilometer (тоже полный набор переводов):
+    // Тоже полностью (kilometer)
     makeUnit(
       {
         en: 'kilometer',
@@ -87,10 +83,10 @@ const unitsData = {
         ja: 'km'
       },
       1e3,
-      ['km','км']
+      ['km', 'км']
     ),
 
-    // inch (просто пример):
+    // Тоже полностью (inch)
     makeUnit(
       {
         en: 'inch',
@@ -106,7 +102,7 @@ const unitsData = {
       },
       {
         en: 'in',
-        ru: 'дюйм',  // иногда у вас был символ "дюйм", либо "in"
+        ru: 'дюйм', // Можно оставить 'in', если хотите
         es: 'in',
         de: 'in',
         fr: 'in',
@@ -117,26 +113,68 @@ const unitsData = {
         ja: 'in'
       },
       0.0254,
-      ['in','дюйм']
+      ['in', 'дюйм']
     ),
 
-    // Остальные (демо — только en/ru), вы допишите:
     makeUnit(
-      { en: 'foot', ru: 'фут' },
-      { en: 'ft',   ru: 'фт' },
-      0.3048,
-      ['ft','фут']
-    ),
-    makeUnit(
-      { en: 'yard', ru: 'ярд' },
-      { en: 'yd',   ru: 'ярд' },
-      0.9144
-    ),
-    // ... и т.д.
+  {
+    en: 'foot',
+    ru: 'фут',
+    es: 'pie',
+    de: 'Fuß',
+    fr: 'pied',
+    zh: '英尺',
+    pt: 'pé',
+    ar: 'قدم',
+    hi: 'फुट',
+    ja: 'フィート'
+  },
+  {
+    en: 'ft',
+    ru: 'фт',
+    es: 'ft',
+    de: 'ft',
+    fr: 'ft',
+    zh: 'ft',
+    pt: 'ft',
+    ar: 'ft',
+    hi: 'ft',
+    ja: 'ft'
+  },
+  0.3048,
+  ['ft', 'фут']
+),
+
+  makeUnit(
+    {
+      en: 'yard',
+      ru: 'ярд',
+      es: 'yarda',
+      de: 'Yard',
+      fr: 'yard',
+      zh: '码',
+      pt: 'jarda',
+      ar: 'ياردة',
+      hi: 'गज',
+      ja: 'ヤード'
+    },
+    {
+      en: 'yd',
+      ru: 'ярд',   // Можно оставить "yd", если хотите единый символ
+      es: 'yd',
+      de: 'yd',
+      fr: 'yd',
+      zh: 'yd',
+      pt: 'yd',
+      ar: 'yd',
+      hi: 'yd',
+      ja: 'yd'
+    },
+    0.9144),
   ],
 
   mass: [
-    // Аналогично: 1-2 единицы — полный перевод, остальные — заглушки:
+    // Пример полностью (kilogram) с переводом
     makeUnit(
       {
         en: 'kilogram',
@@ -163,18 +201,42 @@ const unitsData = {
         ja: 'kg'
       },
       1,
-      ['kg','кг']
+      ['kg', 'кг']
     ),
-    // и т.д.
+
     makeUnit(
-      { en: 'pound', ru: 'фунт' },
-      { en: 'lb',    ru: 'фнт' },
-      0.45359237,
-      ['lb','lbs']
-    )
+    {
+      en: 'pound',
+      ru: 'фунт',
+      es: 'libra',
+      de: 'Pfund',
+      fr: 'livre',
+      zh: '磅',
+      pt: 'libra',
+      ar: 'رطل',
+      hi: 'पाउंड',
+      ja: 'ポンド'
+    },
+    {
+      en: 'lb',
+      ru: 'фунт',
+      es: 'lb',
+      de: 'lb',
+      fr: 'lb',
+      zh: 'lb',
+      pt: 'lb',
+      ar: 'lb',
+      hi: 'lb',
+      ja: 'lb'
+    },
+    0.45359237,
+    ['lb','lbs']
+  )
+
   ],
 
   time: [
+    // Пример (second) полностью
     makeUnit(
       {
         en: 'second',
@@ -201,68 +263,217 @@ const unitsData = {
         ja: 's'
       },
       1,
-      ['sec','с']
+      ['sec', 'с']
     ),
-    // ...
+    makeUnit(
+  {
+    en: 'minute',
+    ru: 'минута',
+    es: 'minuto',
+    de: 'Minute',
+    fr: 'minute',
+    zh: '分钟',
+    pt: 'minuto',
+    ar: 'دقيقة',
+    hi: 'मिनट',
+    ja: '分'
+  },
+  {
+    en: 'min',
+    ru: 'мин',
+    es: 'min',
+    de: 'min',
+    fr: 'min',
+    zh: 'min',
+    pt: 'min',
+    ar: 'min',
+    hi: 'min',
+    ja: 'min'
+  },
+  60,
+  ['min','мин']
+),
+makeUnit(
+  {
+    en: 'hour',
+    ru: 'час',
+    es: 'hora',
+    de: 'Stunde',
+    fr: 'heure',
+    zh: '小时',
+    pt: 'hora',
+    ar: 'ساعة',
+    hi: 'घंटा',
+    ja: '時間'
+  },
+  {
+    en: 'h',
+    ru: 'ч',
+    es: 'h',
+    de: 'h',
+    fr: 'h',
+    zh: 'h',
+    pt: 'h',
+    ar: 'h',
+    hi: 'h',
+    ja: 'h'
+  },
+  3600,
+  ['hr','h']
+),
+makeUnit(
+  {
+    en: 'day',
+    ru: 'день',
+    es: 'día',
+    de: 'Tag',
+    fr: 'jour',
+    zh: '天',
+    pt: 'dia',
+    ar: 'يوم',
+    hi: 'दिन',
+    ja: '日'
+  },
+  {
+    en: 'd',
+    ru: 'д',
+    es: 'd',
+    de: 'd',
+    fr: 'd',
+    zh: 'd',
+    pt: 'd',
+    ar: 'd',
+    hi: 'd',
+    ja: 'd'
+  },
+  86400
+),
+makeUnit(
+  {
+    en: 'week',
+    ru: 'неделя',
+    es: 'semana',
+    de: 'Woche',
+    fr: 'semaine',
+    zh: '星期',
+    pt: 'semana',
+    ar: 'أسبوع',
+    hi: 'सप्ताह',
+    ja: '週間'
+  },
+  {
+    en: 'wk',
+    ru: 'нед',
+    es: 'wk',
+    de: 'wk',
+    fr: 'wk',
+    zh: 'wk',
+    pt: 'wk',
+    ar: 'wk',
+    hi: 'wk',
+    ja: 'wk'
+  },
+  604800,
+  ['week']
+),
+makeUnit(
+  {
+    en: 'year',
+    ru: 'год',
+    es: 'año',
+    de: 'Jahr',
+    fr: 'an',
+    zh: '年',
+    pt: 'ano',
+    ar: 'سنة',
+    hi: 'साल',
+    ja: '年'
+  },
+  {
+    en: 'yr',
+    ru: 'год',
+    es: 'yr',
+    de: 'yr',
+    fr: 'yr',
+    zh: 'yr',
+    pt: 'yr',
+    ar: 'yr',
+    hi: 'yr',
+    ja: 'yr'
+  },
+  31557600,
+  ['yr','год']
+),
+
   ],
 
   temperature: [
-    // Для температуры можно так:
     {
       names: {
-        en: 'Celsius', ru: 'Цельсий', es: 'Celsius', de: 'Celsius', fr: 'Celsius',
-        zh: '摄氏度', pt: 'Celsius', ar: 'سلزيوس', hi: 'सेल्सियस', ja: '摂氏'
+        en: 'Celsius',    ru: 'Цельсий',
+        es: 'Celsius',    de: 'Celsius',
+        fr: 'Celsius',    zh: '摄氏度',
+        pt: 'Celsius',    ar: 'سلزيوس',
+        hi: 'सेल्सियस',   ja: '摂氏'
       },
       symbol: {
-        en: '°C', ru: '°C', es: '°C', de: '°C', fr: '°C',
-        zh: '°C', pt: '°C', ar: '°C', hi: '°C', ja: '°C'
+        en: '°C', ru: '°C', es: '°C', de: '°C',
+        fr: '°C', zh: '°C', pt: '°C', ar: '°C',
+        hi: '°C', ja: '°C'
       }
     },
     {
       names: {
-        en: 'Fahrenheit', ru: 'Фаренгейт', es: 'Fahrenheit', de: 'Fahrenheit', fr: 'Fahrenheit',
-        zh: '华氏度', pt: 'Fahrenheit', ar: 'فهرنهايت', hi: 'फारेनहाइट', ja: '華氏'
+        en: 'Fahrenheit',  ru: 'Фаренгейт',
+        es: 'Fahrenheit',  de: 'Fahrenheit',
+        fr: 'Fahrenheit',  zh: '华氏度',
+        pt: 'Fahrenheit',  ar: 'فهرनهايت',
+        hi: 'फारेनहाइट',    ja: '華氏'
       },
       symbol: {
-        en: '°F', ru: '°F', es: '°F', de: '°F', fr: '°F',
-        zh: '°F', pt: '°F', ar: '°F', hi: '°F', ja: '°F'
+        en: '°F', ru: '°F', es: '°F', de: '°F',
+        fr: '°F', zh: '°F', pt: '°F', ar: '°F',
+        hi: '°F', ja: '°F'
       }
     },
     {
       names: {
-        en: 'Kelvin', ru: 'Кельвин', es: 'Kelvin', de: 'Kelvin', fr: 'Kelvin',
-        zh: '开尔文', pt: 'Kelvin', ar: 'كلفن', hi: 'केल्विन', ja: 'ケルビン'
+        en: 'Kelvin',   ru: 'Кельвин',
+        es: 'Kelvin',   de: 'Kelvin',
+        fr: 'Kelvin',   zh: '开尔文',
+        pt: 'Kelvin',   ar: 'كلفن',
+        hi: 'केल्विन',   ja: 'ケルビン'
       },
       symbol: {
-        en: 'K', ru: 'K', es: 'K', de: 'K', fr: 'K',
-        zh: 'K', pt: 'K', ar: 'K', hi: 'K', ja: 'K'
+        en: 'K', ru: 'K', es: 'K', de: 'K',
+        fr: 'K', zh: 'K', pt: 'K', ar: 'K',
+        hi: 'K', ja: 'K'
       }
     }
   ]
 };
 
-// Температурные формулы, как прежде
+// Температурные конверторы (не меняются)
 const tempConv = {
   '°C': (v) => ({
     '°C': v,
-    '°F': v * 9/5 + 32,
-    'K':  v + 273.15
+    '°F': v * 9 / 5 + 32,
+    'K': v + 273.15
   }),
   '°F': (v) => ({
-    '°C': (v - 32) * 5/9,
+    '°C': (v - 32) * 5 / 9,
     '°F': v,
-    'K':  (v - 32) * 5/9 + 273.15
+    'K': (v - 32) * 5 / 9 + 273.15
   }),
-  'K':  (v) => ({
+  'K': (v) => ({
     '°C': v - 273.15,
-    '°F': (v - 273.15) * 9/5 + 32,
-    'K':  v
+    '°F': (v - 273.15) * 9 / 5 + 32,
+    'K': v
   })
 };
 
-// Загрузка переводов .json, затем создаём Vue-приложение
+// Асинхронно загружаем переводы, затем создаём Vue-приложение
 loadMessages().then(() => {
-
   const app = Vue.createApp({
     template: `
       <!-- Language selector -->
@@ -274,6 +485,7 @@ loadMessages().then(() => {
         </select>
       </div>
 
+      <!-- Заголовок: теперь переводится при смене языка -->
       <h1>{{ $t('title') }}</h1>
 
       <!-- Input row -->
@@ -283,6 +495,7 @@ loadMessages().then(() => {
           v-model="inputText"
           :placeholder="$t('example')"
           @input="parseInput"
+          list="historyList"
         />
 
         <button class="swap-btn" @click="swapUnits">⇄</button>
@@ -295,28 +508,39 @@ loadMessages().then(() => {
         />
       </div>
 
+      <!-- Datalist для всех юнитов -->
       <datalist id="unit-suggestions">
         <option
-          v-for="unit in unitsFlat"
-          :key="displayName(unit)"
+          v-for="(unit, idx) in unitsFlat"
+          :key="idx"
           :value="displaySymbol(unit)"
         >
           {{ displayName(unit) }} ({{ displaySymbol(unit) }})
         </option>
       </datalist>
 
-      <!-- Result -->
+      <!-- Datalist ИСТОРИИ (вместо отдельного блока "history") -->
+      <datalist id="historyList">
+        <option
+          v-for="item in history"
+          :key="item.id"
+          :value="item.text"
+        >
+        </option>
+      </datalist>
+
+      <!-- Результат -->
       <div class="result" v-if="convertedValue !== null">
         {{ $t('result') }}: {{ formattedConverted }} {{ targetUnit }}
       </div>
 
-      <!-- Export buttons -->
+      <!-- Экспорт кнопки -->
       <div class="export-row" v-if="parsedType">
         <button class="btn" @click="exportToExcel">{{ $t('export_excel') }}</button>
         <button class="btn" @click="exportToPDF">{{ $t('export_pdf') }}</button>
       </div>
 
-      <!-- Table -->
+      <!-- Таблица -->
       <div class="table-wrapper" v-if="parsedType">
         <table>
           <thead>
@@ -335,16 +559,7 @@ loadMessages().then(() => {
           </tbody>
         </table>
       </div>
-
-      <!-- History -->
-      <div class="history" v-if="history.length">
-        <h3>{{ $t('history') }}</h3>
-        <ul>
-          <li v-for="h in history" :key="h.id">
-            {{ h.text }}
-          </li>
-        </ul>
-      </div>
+      <!-- История блок мы убрали -->
     `,
 
     data() {
@@ -354,10 +569,11 @@ loadMessages().then(() => {
         parsedValue: null,
         parsedType: '',
         parsedUnit: '',
-        language: 'en',  // язык по умолчанию
+        language: 'en',  // по умолчанию
         history: [],
 
-        languages: supportedLangs.map((code) => ({
+        // Список кодов + отображаемое название в select
+        languages: supportedLangs.map(code => ({
           code,
           name: {
             en: 'English',
@@ -389,16 +605,16 @@ loadMessages().then(() => {
         return this.convertToTarget(this.parsedValue, this.parsedUnit, this.targetUnit);
       },
       formattedConverted() {
-        return this.convertedValue !== null ? bigFormat(this.convertedValue) : '';
+        return (this.convertedValue !== null)
+          ? bigFormat(this.convertedValue)
+          : '';
       }
     },
 
     methods: {
-      // 1) Имя единицы на текущем языке
       displayName(u) {
         return u.names?.[this.language] || u.names?.en || '';
       },
-      // 2) Символ на текущем языке
       displaySymbol(u) {
         return u.symbol?.[this.language] || u.symbol?.en || '';
       },
@@ -407,7 +623,7 @@ loadMessages().then(() => {
         const txt = this.inputText.trim();
         if (!txt) return;
 
-        // например: "5 km"
+        // Пример: "5 km"
         const match = txt.match(/^(.+?)\s*([a-zA-Zа-яµ°]+)$/);
         if (!match) {
           this.parsedType = '';
@@ -424,7 +640,7 @@ loadMessages().then(() => {
           return;
         }
 
-        // Ищем юнит через aliases или через displaySymbol
+        // Ищем юнит
         const found =
           this.unitsFlat.find(u => u.aliases && u.aliases.includes(unitToken)) ||
           this.unitsFlat.find(u => this.displaySymbol(u) === unitToken);
@@ -437,16 +653,18 @@ loadMessages().then(() => {
         this.parsedValue = val;
         this.parsedUnit = this.displaySymbol(found);
 
-        // Находим, в каком разделе (length/mass/time/temperature) он лежит
+        // Определяем категорию
         this.parsedType = Object.entries(this.units)
-          .find(([k, arr]) => arr.includes(found))[0];
+          .find(([cat, arr]) => arr.includes(found))[0];
 
-        // Если targetUnit пустой — задаём что-то по умолчанию
+        // Если targetUnit не задан — подставим дефолт
         if (!this.targetUnit) {
           if (this.parsedType === 'temperature') {
             this.targetUnit = 'K';
           } else {
-            this.targetUnit = this.displaySymbol(this.units[this.parsedType][0]);
+            this.targetUnit = this.displaySymbol(
+              this.units[this.parsedType][0]
+            );
           }
         }
       },
@@ -456,7 +674,6 @@ loadMessages().then(() => {
           const table = tempConv[fromSym]?.(value);
           return table?.[toSym] ?? null;
         }
-
         const arr = this.units[this.parsedType];
         const from = arr.find(u => this.displaySymbol(u) === fromSym);
         const to = arr.find(u => this.displaySymbol(u) === toSym);
@@ -469,10 +686,13 @@ loadMessages().then(() => {
         if (type === 'temperature') {
           const table = tempConv[this.parsedUnit]?.(val);
           const sym = this.displaySymbol(unit);
-          return table?.[sym] != null ? bigFormat(table[sym]) : '';
+          return (table && table[sym] != null)
+            ? bigFormat(table[sym])
+            : '';
         }
-        // Другая категория
-        const base = this.units[type].find(u => this.displaySymbol(u) === this.parsedUnit);
+        // Иное (length, mass, time...)
+        const arr = this.units[type];
+        const base = arr.find(u => this.displaySymbol(u) === this.parsedUnit);
         const converted = val * (base.factor / unit.factor);
         return bigFormat(converted);
       },
@@ -484,6 +704,7 @@ loadMessages().then(() => {
         this.parseInput();
       },
 
+      // Экспорт в Excel
       exportToExcel() {
         const ws = XLSX.utils.aoa_to_sheet([
           [this.$t('unit'), this.$t('symbol'), this.$t('value')],
@@ -527,39 +748,32 @@ loadMessages().then(() => {
         });
 
         doc.save('conversion.pdf');
-      },
-
-      // Не забываем, что history пишется при convertedValue
-      pushHistory(text) {
-        this.history.unshift({ id: Date.now(), text });
-        if (this.history.length > MAX_HISTORY) this.history.pop();
       }
     },
 
     watch: {
+      // При смене языка переключаем i18n
       language(lang) {
         i18n.global.locale = lang;
         if (!this.parsedType) return;
 
-        // При смене языка нужно «переопределить» parsedUnit / targetUnit,
-        // т.к. символы могли измениться
+        // Пересчитываем символьные обозначения
         const arr = this.units[this.parsedType];
-        const mapSym = (sym) => {
-          // Ищем юнит, у которого aliases/symbol.en/symbol.ru/... = старый sym
+        const mapSym = (oldSym) => {
           return arr.find(u =>
-            u.aliases?.includes(sym) ||
-            Object.values(u.symbol || {}).includes(sym)
+            u.aliases?.includes(oldSym) ||
+            Object.values(u.symbol || {}).includes(oldSym)
           );
         };
 
         const foundParsed = mapSym(this.parsedUnit);
         const foundTarget = mapSym(this.targetUnit);
 
-        // Если находим — берём новый displaySymbol
         if (foundParsed) this.parsedUnit = this.displaySymbol(foundParsed);
         if (foundTarget) this.targetUnit = this.displaySymbol(foundTarget);
       },
 
+      // Запись в историю
       convertedValue(val) {
         if (val == null) return;
         const text = `${this.inputText} → ${bigFormat(val)} ${this.targetUnit}`;
@@ -571,6 +785,8 @@ loadMessages().then(() => {
     }
   });
 
+  // Подключаем i18n к приложению
   app.use(i18n);
+  // Монтируем в #app (в index.html)
   app.mount('#app');
 });
