@@ -1,5 +1,8 @@
 {
-  "title": "Conversor",
+  "title": "Conversor de Unidades",
+  "converter": "Conversor",
+  "library": "Biblioteca",
+  "calculator": "Calculadora",
   "example": "p. ej. 5 km",
   "toUnit": "Unidad destino",
   "result": "Resultado",
@@ -8,5 +11,8 @@
   "value": "Valor",
   "history": "Historial",
   "export_excel": "Excel",
-  "export_pdf": "PDF"
+  "export_pdf": "PDF",
+  "symbol_help": "Símbolos rápidos",
+  "calc_stub": "Módulo de calculadora en desarrollo…",
+  "case_note": "Mayúsculas y minúsculas distinguen: \"k\" ≠ \"K\""
 }

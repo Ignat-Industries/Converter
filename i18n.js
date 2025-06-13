@@ -1,36 +1,21 @@
 // i18n.js
+export const supportedLangs = ['en','ru','ar','de','es','fr','hi','ja','pt','zh'];
 
-// Список кодов языков, которые будем подгружать
-export const supportedLangs = [
-  'en', 'ru', 'es', 'de', 'fr',
-  'zh', 'pt', 'ar', 'hi', 'ja'
-];
-
-// Создаём экземпляр i18n без сообщений (messages = {})
 export const i18n = VueI18n.createI18n({
-  legacy: false,
-  locale: 'en',         // язык по умолчанию
-  fallbackLocale: 'en', // если перевод отсутствует — fallback
-  messages: {}          // пустой объект (будем загружать динамически)
+  legacy:false,
+  locale:'en',
+  fallbackLocale:'en',
+  messages:{}
 });
 
-/**
- * Загружает файлы перевода из папки `./messages/`.
- * Для каждого языка (en, ru, es, ...) ищет `./messages/<lang>.json`.
- * Если найден — добавляет в i18n.
- */
-export async function loadMessages() {
-  const basePath = './messages';
-  for (const lang of supportedLangs) {
-    try {
-      const response = await fetch(`${basePath}/${lang}.json`);
-      if (!response.ok) continue; // если 404 — пропускаем
-
-      const data = await response.json();
-      // Записываем переводы в i18n для данного языка
-      i18n.global.setLocaleMessage(lang, data);
-    } catch (err) {
-      console.warn(`Failed to load messages for ${lang}`, err);
+export async function loadMessages(){
+  for(const l of supportedLangs){
+    try{
+      const r = await fetch(`./messages/${l}.json`);
+      if(!r.ok) continue;
+      i18n.global.setLocaleMessage(l, await r.json());
+    }catch(e){
+      console.warn(`i18n: ${l} load fail`,e);
     }
   }
 }

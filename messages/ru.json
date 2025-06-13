@@ -1,5 +1,8 @@
 {
   "title": "Конвертер единиц",
+  "converter": "Конвертер",
+  "library": "Библиотека",
+  "calculator": "Калькулятор",
   "example": "например 5 км",
   "toUnit": "Целевая единица",
   "result": "Результат",
@@ -8,5 +11,8 @@
   "value": "Значение",
   "history": "История",
   "export_excel": "Excel",
-  "export_pdf": "PDF"
+  "export_pdf": "PDF",
+  "symbol_help": "Быстрые символы",
+  "calc_stub": "Модуль калькулятора в разработке…",
+  "case_note": "Регистр важен: \"k\" ≠ \"K\""
 }

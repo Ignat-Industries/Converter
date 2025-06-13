@@ -1,5 +1,8 @@
 {
   "title": "单位换算器",
+  "converter": "转换器",
+  "library": "库",
+  "calculator": "计算器",
   "example": "例如 5 km",
   "toUnit": "目标单位",
   "result": "结果",
@@ -8,5 +11,8 @@
   "value": "数值",
   "history": "历史记录",
   "export_excel": "Excel",
-  "export_pdf": "PDF"
+  "export_pdf": "PDF",
+  "symbol_help": "快捷符号",
+  "calc_stub": "计算器模块开发中…",
+  "case_note": "区分大小写：\"k\" ≠ \"K\""
 }

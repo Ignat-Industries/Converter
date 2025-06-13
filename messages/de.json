@@ -1,5 +1,8 @@
 {
   "title": "Einheiten-Umrechner",
+  "converter": "Konverter",
+  "library": "Bibliothek",
+  "calculator": "Rechner",
   "example": "z. B. 5 km",
   "toUnit": "Zieleinheit",
   "result": "Ergebnis",
@@ -8,5 +11,8 @@
   "value": "Wert",
   "history": "Verlauf",
   "export_excel": "Excel",
-  "export_pdf": "PDF"
+  "export_pdf": "PDF",
+  "symbol_help": "Schnellsymbole",
+  "calc_stub": "Rechnermodul in Arbeit…",
+  "case_note": "Groß-/Kleinschreibung ist relevant: \"k\" ≠ \"K\""
 }

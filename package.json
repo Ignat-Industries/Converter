@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "vue-i18n": "^11.1.4"
+  },
+  "devDependencies": {
+    "jspdf-font": "^1.0.7"
   }
 }

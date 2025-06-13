@@ -1,5 +1,8 @@
 {
-  "title": "Convertisseur",
+  "title": "Convertisseur d’unités",
+  "converter": "Convertisseur",
+  "library": "Bibliothèque",
+  "calculator": "Calculatrice",
   "example": "ex. 5 km",
   "toUnit": "Unité cible",
   "result": "Résultat",
@@ -8,5 +11,8 @@
   "value": "Valeur",
   "history": "Historique",
   "export_excel": "Excel",
-  "export_pdf": "PDF"
+  "export_pdf": "PDF",
+  "symbol_help": "Symboles rapides",
+  "calc_stub": "Module calculatrice en cours…",
+  "case_note": "La casse est sensible : « k » ≠ « K »"
 }

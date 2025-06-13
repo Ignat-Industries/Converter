@@ -1,792 +1,406 @@
-// app.js
+/* eslint-disable no-unused-vars */
+/* global Vue, math, XLSX, Tabulator, jspdf */
 import { i18n, loadMessages, supportedLangs } from './i18n.js';
+import unitsData from './unitsData.js';
 
-/**
- * Фабрика для создания юнита.
- * @param {object} names   — словарь { en:'...', ru:'...', es:'...', ... }
- * @param {object} symbol  — словарь { en:'...', ru:'...', es:'...', ... }
- * @param {number} factor  — коэффициент (пример: 1 для базовой)
- * @param {string[]} aliases — алиасы (например: ['lb','lbs'])
- */
-function makeUnit(names, symbol, factor, aliases = []) {
-  return { names, symbol, factor, aliases };
+/* =======================================================================
+ *  У Т И Л И Т Ы
+ * ===================================================================== */
+const MAX_HISTORY     = 10;
+const SPECIAL_SYMBOLS = ['Ω', 'µ', '°', 'π', '×', '⁻¹'];
+const LIBRARY_PATH    = '/data/raw/library.xlsx';
+
+/** Форматирует число для вывода */
+function bigFormat(n) {
+  const a = Math.abs(n);
+  if (a >= 1e6 || (a && a <= 1e-6)) {
+    return n.toExponential(6).replace(/e\+/, 'e');
+  }
+  return (Math.round(n * 1e12) / 1e12).toString();
 }
 
-// Небольшая функция для форматирования больших/малых чисел
-const bigFormat = (num) => {
-  const a = Math.abs(num);
-  return (a >= 1e6 || (a <= 1e-6 && a !== 0))
-    ? num.toExponential(6).replace(/e\+/, 'e')
-    : num.toLocaleString(undefined, { maximumFractionDigits: 12 });
-};
+/* noinspection JSNonASCIINames */ /* температурные формулы */
+const tempConv = /** @type {{[k:string]:(v:number)=>Record<string,number>}} */ ({
+  '°C': v => ({ '°C': v,                 '°F': v * 9 / 5 + 32,      'K': v + 273.15 }),
+  '°F': v => ({ '°C': (v - 32) * 5 / 9,  '°F': v,                   'K': (v - 32) * 5 / 9 + 273.15 }),
+  'K' : v => ({ '°C': v - 273.15,        '°F': (v - 273.15) * 9 / 5 + 32, 'K': v })
+});
 
-const MAX_HISTORY = 10;
-
-// Набор единиц — часть переведена на все 10 языков (пример meter, kilometer, inch...).
-// Остальные указаны сокращённо (en + ru), вы можете дописать переводы по аналогии.
-const unitsData = {
-  length: [
-    // Полностью переведённый пример (meter)
-    makeUnit(
-      {
-        en: 'meter',
-        ru: 'метр',
-        es: 'metro',
-        de: 'Meter',
-        fr: 'mètre',
-        zh: '米',
-        pt: 'metro',
-        ar: 'متر',
-        hi: 'मीटर',
-        ja: 'メートル'
-      },
-      {
-        en: 'm',
-        ru: 'м',
-        es: 'm',
-        de: 'm',
-        fr: 'm',
-        zh: 'm',
-        pt: 'm',
-        ar: 'م',
-        hi: 'm',
-        ja: 'm'
-      },
-      1,
-      ['m', 'м']
-    ),
-
-    // Тоже полностью (kilometer)
-    makeUnit(
-      {
-        en: 'kilometer',
-        ru: 'километр',
-        es: 'kilómetro',
-        de: 'Kilometer',
-        fr: 'kilomètre',
-        zh: '千米',
-        pt: 'quilômetro',
-        ar: 'كيلومتر',
-        hi: 'किलोमीटर',
-        ja: 'キロメートル'
-      },
-      {
-        en: 'km',
-        ru: 'км',
-        es: 'km',
-        de: 'km',
-        fr: 'km',
-        zh: 'km',
-        pt: 'km',
-        ar: 'كم',
-        hi: 'km',
-        ja: 'km'
-      },
-      1e3,
-      ['km', 'км']
-    ),
-
-    // Тоже полностью (inch)
-    makeUnit(
-      {
-        en: 'inch',
-        ru: 'дюйм',
-        es: 'pulgada',
-        de: 'Zoll',
-        fr: 'pouce',
-        zh: '英寸',
-        pt: 'polegada',
-        ar: 'بوصة',
-        hi: 'इंच',
-        ja: 'インチ'
-      },
-      {
-        en: 'in',
-        ru: 'дюйм', // Можно оставить 'in', если хотите
-        es: 'in',
-        de: 'in',
-        fr: 'in',
-        zh: 'in',
-        pt: 'in',
-        ar: 'in',
-        hi: 'in',
-        ja: 'in'
-      },
-      0.0254,
-      ['in', 'дюйм']
-    ),
-
-    makeUnit(
-  {
-    en: 'foot',
-    ru: 'фут',
-    es: 'pie',
-    de: 'Fuß',
-    fr: 'pied',
-    zh: '英尺',
-    pt: 'pé',
-    ar: 'قدم',
-    hi: 'फुट',
-    ja: 'フィート'
-  },
-  {
-    en: 'ft',
-    ru: 'фт',
-    es: 'ft',
-    de: 'ft',
-    fr: 'ft',
-    zh: 'ft',
-    pt: 'ft',
-    ar: 'ft',
-    hi: 'ft',
-    ja: 'ft'
-  },
-  0.3048,
-  ['ft', 'фут']
-),
-
-  makeUnit(
-    {
-      en: 'yard',
-      ru: 'ярд',
-      es: 'yarda',
-      de: 'Yard',
-      fr: 'yard',
-      zh: '码',
-      pt: 'jarda',
-      ar: 'ياردة',
-      hi: 'गज',
-      ja: 'ヤード'
-    },
-    {
-      en: 'yd',
-      ru: 'ярд',   // Можно оставить "yd", если хотите единый символ
-      es: 'yd',
-      de: 'yd',
-      fr: 'yd',
-      zh: 'yd',
-      pt: 'yd',
-      ar: 'yd',
-      hi: 'yd',
-      ja: 'yd'
-    },
-    0.9144),
-  ],
-
-  mass: [
-    // Пример полностью (kilogram) с переводом
-    makeUnit(
-      {
-        en: 'kilogram',
-        ru: 'килограмм',
-        es: 'kilogramo',
-        de: 'Kilogramm',
-        fr: 'kilogramme',
-        zh: '千克',
-        pt: 'quilograma',
-        ar: 'كيلوجرام',
-        hi: 'किलोग्राम',
-        ja: 'キログラム'
-      },
-      {
-        en: 'kg',
-        ru: 'кг',
-        es: 'kg',
-        de: 'kg',
-        fr: 'kg',
-        zh: 'kg',
-        pt: 'kg',
-        ar: 'كجم',
-        hi: 'kg',
-        ja: 'kg'
-      },
-      1,
-      ['kg', 'кг']
-    ),
-
-    makeUnit(
-    {
-      en: 'pound',
-      ru: 'фунт',
-      es: 'libra',
-      de: 'Pfund',
-      fr: 'livre',
-      zh: '磅',
-      pt: 'libra',
-      ar: 'رطل',
-      hi: 'पाउंड',
-      ja: 'ポンド'
-    },
-    {
-      en: 'lb',
-      ru: 'фунт',
-      es: 'lb',
-      de: 'lb',
-      fr: 'lb',
-      zh: 'lb',
-      pt: 'lb',
-      ar: 'lb',
-      hi: 'lb',
-      ja: 'lb'
-    },
-    0.45359237,
-    ['lb','lbs']
-  )
-
-  ],
-
-  time: [
-    // Пример (second) полностью
-    makeUnit(
-      {
-        en: 'second',
-        ru: 'секунда',
-        es: 'segundo',
-        de: 'Sekunde',
-        fr: 'seconde',
-        zh: '秒',
-        pt: 'segundo',
-        ar: 'ثانية',
-        hi: 'सेकंड',
-        ja: '秒'
-      },
-      {
-        en: 's',
-        ru: 'с',
-        es: 's',
-        de: 's',
-        fr: 's',
-        zh: 's',
-        pt: 's',
-        ar: 'ث',
-        hi: 's',
-        ja: 's'
-      },
-      1,
-      ['sec', 'с']
-    ),
-    makeUnit(
-  {
-    en: 'minute',
-    ru: 'минута',
-    es: 'minuto',
-    de: 'Minute',
-    fr: 'minute',
-    zh: '分钟',
-    pt: 'minuto',
-    ar: 'دقيقة',
-    hi: 'मिनट',
-    ja: '分'
-  },
-  {
-    en: 'min',
-    ru: 'мин',
-    es: 'min',
-    de: 'min',
-    fr: 'min',
-    zh: 'min',
-    pt: 'min',
-    ar: 'min',
-    hi: 'min',
-    ja: 'min'
-  },
-  60,
-  ['min','мин']
-),
-makeUnit(
-  {
-    en: 'hour',
-    ru: 'час',
-    es: 'hora',
-    de: 'Stunde',
-    fr: 'heure',
-    zh: '小时',
-    pt: 'hora',
-    ar: 'ساعة',
-    hi: 'घंटा',
-    ja: '時間'
-  },
-  {
-    en: 'h',
-    ru: 'ч',
-    es: 'h',
-    de: 'h',
-    fr: 'h',
-    zh: 'h',
-    pt: 'h',
-    ar: 'h',
-    hi: 'h',
-    ja: 'h'
-  },
-  3600,
-  ['hr','h']
-),
-makeUnit(
-  {
-    en: 'day',
-    ru: 'день',
-    es: 'día',
-    de: 'Tag',
-    fr: 'jour',
-    zh: '天',
-    pt: 'dia',
-    ar: 'يوم',
-    hi: 'दिन',
-    ja: '日'
-  },
-  {
-    en: 'd',
-    ru: 'д',
-    es: 'd',
-    de: 'd',
-    fr: 'd',
-    zh: 'd',
-    pt: 'd',
-    ar: 'd',
-    hi: 'd',
-    ja: 'd'
-  },
-  86400
-),
-makeUnit(
-  {
-    en: 'week',
-    ru: 'неделя',
-    es: 'semana',
-    de: 'Woche',
-    fr: 'semaine',
-    zh: '星期',
-    pt: 'semana',
-    ar: 'أسبوع',
-    hi: 'सप्ताह',
-    ja: '週間'
-  },
-  {
-    en: 'wk',
-    ru: 'нед',
-    es: 'wk',
-    de: 'wk',
-    fr: 'wk',
-    zh: 'wk',
-    pt: 'wk',
-    ar: 'wk',
-    hi: 'wk',
-    ja: 'wk'
-  },
-  604800,
-  ['week']
-),
-makeUnit(
-  {
-    en: 'year',
-    ru: 'год',
-    es: 'año',
-    de: 'Jahr',
-    fr: 'an',
-    zh: '年',
-    pt: 'ano',
-    ar: 'سنة',
-    hi: 'साल',
-    ja: '年'
-  },
-  {
-    en: 'yr',
-    ru: 'год',
-    es: 'yr',
-    de: 'yr',
-    fr: 'yr',
-    zh: 'yr',
-    pt: 'yr',
-    ar: 'yr',
-    hi: 'yr',
-    ja: 'yr'
-  },
-  31557600,
-  ['yr','год']
-),
-
-  ],
-
-  temperature: [
-    {
-      names: {
-        en: 'Celsius',    ru: 'Цельсий',
-        es: 'Celsius',    de: 'Celsius',
-        fr: 'Celsius',    zh: '摄氏度',
-        pt: 'Celsius',    ar: 'سلزيوس',
-        hi: 'सेल्सियस',   ja: '摂氏'
-      },
-      symbol: {
-        en: '°C', ru: '°C', es: '°C', de: '°C',
-        fr: '°C', zh: '°C', pt: '°C', ar: '°C',
-        hi: '°C', ja: '°C'
-      }
-    },
-    {
-      names: {
-        en: 'Fahrenheit',  ru: 'Фаренгейт',
-        es: 'Fahrenheit',  de: 'Fahrenheit',
-        fr: 'Fahrenheit',  zh: '华氏度',
-        pt: 'Fahrenheit',  ar: 'فهرनهايت',
-        hi: 'फारेनहाइट',    ja: '華氏'
-      },
-      symbol: {
-        en: '°F', ru: '°F', es: '°F', de: '°F',
-        fr: '°F', zh: '°F', pt: '°F', ar: '°F',
-        hi: '°F', ja: '°F'
-      }
-    },
-    {
-      names: {
-        en: 'Kelvin',   ru: 'Кельвин',
-        es: 'Kelvin',   de: 'Kelvin',
-        fr: 'Kelvin',   zh: '开尔文',
-        pt: 'Kelvin',   ar: 'كلفن',
-        hi: 'केल्विन',   ja: 'ケルビン'
-      },
-      symbol: {
-        en: 'K', ru: 'K', es: 'K', de: 'K',
-        fr: 'K', zh: 'K', pt: 'K', ar: 'K',
-        hi: 'K', ja: 'K'
-      }
-    }
-  ]
-};
-
-// Температурные конверторы (не меняются)
-const tempConv = {
-  '°C': (v) => ({
-    '°C': v,
-    '°F': v * 9 / 5 + 32,
-    'K': v + 273.15
-  }),
-  '°F': (v) => ({
-    '°C': (v - 32) * 5 / 9,
-    '°F': v,
-    'K': (v - 32) * 5 / 9 + 273.15
-  }),
-  'K': (v) => ({
-    '°C': v - 273.15,
-    '°F': (v - 273.15) * 9 / 5 + 32,
-    'K': v
-  })
-};
-
-// Асинхронно загружаем переводы, затем создаём Vue-приложение
+/* =======================================================================
+ *  П Р И Л О Ж Е Н И Е
+ * ===================================================================== */
 loadMessages().then(() => {
-  const app = Vue.createApp({
-    template: `
-      <!-- Language selector -->
+  const { createApp, ref, computed, watch, onMounted } = Vue;
+
+  const app = createApp({
+    /* html */ template: `
       <div class="lang-select">
         <select v-model="language">
-          <option v-for="lang in languages" :value="lang.code">
-            {{ lang.name }}
-          </option>
+          <option v-for="l in languages" :value="l.code">{{ l.name }}</option>
         </select>
       </div>
 
-      <!-- Заголовок: теперь переводится при смене языка -->
       <h1>{{ $t('title') }}</h1>
 
-      <!-- Input row -->
-      <div class="input-row">
-        <input
-          type="text"
-          v-model="inputText"
-          :placeholder="$t('example')"
-          @input="parseInput"
-          list="historyList"
-        />
-
-        <button class="swap-btn" @click="swapUnits">⇄</button>
-
-        <input
-          type="text"
-          v-model="targetUnit"
-          :placeholder="$t('toUnit')"
-          list="unit-suggestions"
-        />
+      <!-- навигация -->
+      <div class="nav">
+        <button v-for="m in modules"
+                :class="{active: currentModule===m}"
+                @click="currentModule=m">
+          {{ $t(m) }}
+        </button>
       </div>
 
-      <!-- Datalist для всех юнитов -->
-      <datalist id="unit-suggestions">
-        <option
-          v-for="(unit, idx) in unitsFlat"
-          :key="idx"
-          :value="displaySymbol(unit)"
-        >
-          {{ displayName(unit) }} ({{ displaySymbol(unit) }})
-        </option>
-      </datalist>
+      <!-- ================= К О Н В Е Р Т Е Р ================= -->
+      <template v-if="currentModule==='converter'">
+        <div class="input-row">
+          <input
+            v-model="inputText"
+            :placeholder="$t('example')"
+            :list="inputText.trim() === '' ? 'historyList' : 'dyn-suggestions'"
+            @input="parseInput"
+            @focus="onLeftFocus"
+          />
 
-      <!-- Datalist ИСТОРИИ (вместо отдельного блока "history") -->
-      <datalist id="historyList">
-        <option
-          v-for="item in history"
-          :key="item.id"
-          :value="item.text"
-        >
-        </option>
-      </datalist>
+          <button class="swap-btn" @click="swapUnits">
+            <i class="fas fa-right-left"></i>
+          </button>
 
-      <!-- Результат -->
-      <div class="result" v-if="convertedValue !== null">
-        {{ $t('result') }}: {{ formattedConverted }} {{ targetUnit }}
-      </div>
+          <input v-model="targetUnit"
+                 list="target-suggestions"
+                 :placeholder="$t('toUnit')"
+                 @focus="showFullTargetList"
+                 @input="onTargetTyped" />
+          
+          
+          <datalist id="target-suggestions">
+            <option v-for="u in targetOptions" :value="u">
+              {{ displayNameBySym(u) }} ({{ u }})
+            </option>
+          </datalist>
+        </div>
 
-      <!-- Экспорт кнопки -->
-      <div class="export-row" v-if="parsedType">
-        <button class="btn" @click="exportToExcel">{{ $t('export_excel') }}</button>
-        <button class="btn" @click="exportToPDF">{{ $t('export_pdf') }}</button>
-      </div>
+        <div class="symbols">
+          <span>{{ $t('symbol_help') }}:</span>
+          <button v-for="s in special" class="sym-btn" @click="appendSym(s)">{{ s }}</button>
+        </div>
 
-      <!-- Таблица -->
-      <div class="table-wrapper" v-if="parsedType">
-        <table>
-          <thead>
-            <tr>
-              <th>{{ $t('unit') }}</th>
-              <th>{{ $t('symbol') }}</th>
-              <th>{{ $t('value') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(unit, idx) in units[parsedType]" :key="idx">
-              <td>{{ displayName(unit) }}</td>
-              <td>{{ displaySymbol(unit) }}</td>
-              <td>{{ formatValue(parsedType, parsedValue, unit) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- История блок мы убрали -->
+        <div class="result" v-if="convertedValue!==null">
+          {{ $t('result') }}: {{ formattedConverted }} {{ targetUnit }}
+        </div>
+
+        <div class="table-actions" v-if="parsedType">
+          <button class="btn" @click="exportExcel">{{ $t('export_excel') }}</button>
+          <button class="btn" @click="exportPDF">{{ $t('export_pdf') }}</button>
+        </div>
+
+        <datalist id="historyList">
+          <option v-for="h in history" :value="h"></option>
+        </datalist>
+        
+        <datalist id="dyn-suggestions">
+          <option v-for="opt in dynSuggestions"
+                  :key="opt.full"
+                  :value="opt.full">
+            {{ opt.name }} ({{ opt.short }})
+          </option>
+        </datalist>
+        
+        <datalist id="unit-suggestions">
+           <template v-for="unit in unitsFlat">
+              <!-- главный символ -->
+              <option :value="sym(unit).toLowerCase()">
+                {{ name(unit) }} ({{ sym(unit) }})
+              </option>
+              <!-- все алиасы, если есть -->
+              <option v-for="al in unit.aliases || []"
+                      :key="al"
+                      :value="al.toLowerCase()">
+                {{ name(unit) }} ({{ al }})
+              </option>
+           </template>
+        </datalist>
+
+        
+        <p class="note">{{ $t('case_note') }}</p>
+      </template>
+
+      <!-- ================= Б И Б Л И О Т Е К А ================ -->
+      <template v-else-if="currentModule==='library'">
+        <div class="table-holder" ref="tableHolder"></div>
+        <div class="table-actions">
+          <button class="btn" @click="downloadTable('xlsx')">{{ $t('export_excel') }}</button>
+          <button class="btn" @click="downloadTable('pdf')">{{ $t('export_pdf') }}</button>
+          <button class="btn" @click="downloadTable('csv')">CSV</button>
+        </div>
+      </template>
+
+      <!-- ================= К А Л Ь К У Л Я Т О Р ============== -->
+      <template v-else>
+        <div class="stub">
+          <i class="fas fa-tools fa-2x"></i><br>
+          {{ $t('calc_stub') }}
+        </div>
+      </template>
     `,
 
-    data() {
-      return {
-        inputText: '',
-        targetUnit: '',
-        parsedValue: null,
-        parsedType: '',
-        parsedUnit: '',
-        language: 'en',  // по умолчанию
-        history: [],
+    /* ----------------- Л О Г И К А -------------------------- */
+    setup() {
+      /* ----------- глобальные объекты XLSX ------------------ */
+      /** @type {import('xlsx').utils} */
+      const XLSXUtils = XLSX.utils;
 
-        // Список кодов + отображаемое название в select
-        languages: supportedLangs.map(code => ({
-          code,
-          name: {
-            en: 'English',
-            ru: 'Русский',
-            es: 'Español',
-            de: 'Deutsch',
-            fr: 'Français',
-            zh: '中文',
-            pt: 'Português',
-            ar: 'العربية',
-            hi: 'हिन्दी',
-            ja: '日本語'
-          }[code] || code
-        }))
+      const currentModule = ref('converter');
+      const modules       = ['converter', 'library', 'calculator'];
+
+      const language = ref('en');
+      const languages = supportedLangs.map(code => ({
+        code,
+        name: {
+          en:'English', ru:'Русский', es:'Español', de:'Deutsch', fr:'Français',
+          zh:'中文',     pt:'Português', ar:'العربية', hi:'हिन्दी', ja:'日本語'
+        }[code] || code
+      }));
+
+      /* ----------- конвертер ---------------- */
+      const inputText    = ref('');
+      const targetUnit   = ref('');
+      const parsedValue  = ref(null);
+      const parsedType   = ref('');
+      const parsedUnit   = ref('');
+      const history      = ref(JSON.parse(localStorage.getItem('convHist') || '[]'));
+
+      /* ----------- библиотека --------------- */
+      const tableHolder = ref(null);
+      /** @type {Tabulator | null} */ let tableInst = null;
+
+      /* === вычисления === */
+      const targetOptions = computed(() =>
+        parsedType.value ? unitsData[parsedType.value].map(u => sym(u)) : []
+      );
+
+      const convertedValue = computed(() => {
+        if (!parsedType.value || !targetUnit.value || parsedValue.value == null) return null;
+        return convert(parsedValue.value, parsedUnit.value, targetUnit.value);
+      });
+
+      const formattedConverted = computed(() =>
+        convertedValue.value != null ? bigFormat(convertedValue.value) : ''
+      );
+
+      /* === helpers === */
+
+      const displayNameBySym = symb => {
+        const flat = Object.values(unitsData).flat();
+        const u = flat.find(x => sym(x) === symb);
+        return u ? name(u) : symb;
       };
-    },
 
-    computed: {
-      units() {
-        return unitsData;
-      },
-      unitsFlat() {
-        return Object.values(this.units).flat();
-      },
-      convertedValue() {
-        if (!this.parsedType || !this.targetUnit || this.parsedValue === null) {
-          return null;
-        }
-        return this.convertToTarget(this.parsedValue, this.parsedUnit, this.targetUnit);
-      },
-      formattedConverted() {
-        return (this.convertedValue !== null)
-          ? bigFormat(this.convertedValue)
-          : '';
-      }
-    },
+      const name = u => u.names?.[language.value]  || u.names.en;
+      const sym  = u => u.symbol?.[language.value] || u.symbol.en;
+      const appendSym = (s) => { inputText.value += s; };
+      const unitsFlat = computed(() => Object.values(unitsData).flat());
 
-    methods: {
-      displayName(u) {
-        return u.names?.[this.language] || u.names?.en || '';
-      },
-      displaySymbol(u) {
-        return u.symbol?.[this.language] || u.symbol?.en || '';
-      },
-
-      parseInput() {
-        const txt = this.inputText.trim();
-        if (!txt) return;
-
-        // Пример: "5 km"
-        const match = txt.match(/^(.+?)\s*([a-zA-Zа-яµ°]+)$/);
-        if (!match) {
-          this.parsedType = '';
-          return;
-        }
-        const valExpr = match[1];
-        const unitToken = match[2];
+      function parseInput() {
+        const m = inputText.value.trim().match(/^(.+?)\s*([a-zA-Zа-яµ°]+)$/i);
+        if (!m) { parsedType.value = ''; return; }
 
         let val;
-        try {
-          val = math.evaluate(valExpr);
-        } catch (e) {
-          this.parsedType = '';
-          return;
+        try { val = math.evaluate(m[1]); }
+        catch { parsedType.value = ''; return; }
+
+        const token = m[2].toLowerCase();
+        const flat  = Object.values(unitsData).flat();
+        const found = flat.find(u => u.aliases?.includes(token)) || flat.find(u => sym(u).toLowerCase() === token);
+        if (!found) { parsedType.value = ''; return; }
+
+        parsedValue.value = val;
+        parsedUnit.value  = sym(found);
+        parsedType.value  = Object.entries(unitsData).find(([, arr]) => arr.includes(found))[0];
+
+        // Если user стёр «km» и набрал «kg» → меняем список targetOptions.
+        // Если старая цель не входит в новый список — сбрасываем её.
+        const allowed = unitsData[parsedType.value].map(u => sym(u));
+        if (!allowed.includes(targetUnit.value)) {
+          targetUnit.value = parsedType.value === 'temperature'
+            ? 'K'
+            : allowed[0]; // первая единица новой системы
         }
+      }
 
-        // Ищем юнит
-        const found =
-          this.unitsFlat.find(u => u.aliases && u.aliases.includes(unitToken)) ||
-          this.unitsFlat.find(u => this.displaySymbol(u) === unitToken);
-
-        if (!found) {
-          this.parsedType = '';
-          return;
+      function convert(v, from, to) {
+        if (parsedType.value === 'temperature') {
+          return tempConv[from]?.(v)?.[to] ?? null;
         }
+        const arr = unitsData[parsedType.value];
+        const f = arr.find(u => sym(u).toLowerCase() === from.toLowerCase());
+        const t = arr.find(u => sym(u).toLowerCase() === to.toLowerCase());
+        return f && t ? v * (f.factor / t.factor) : null;
+      }
 
-        this.parsedValue = val;
-        this.parsedUnit = this.displaySymbol(found);
+      const swapUnits = () => {
+        [targetUnit.value, parsedUnit.value] = [parsedUnit.value, targetUnit.value];
+        parseInput();
+      };
 
-        // Определяем категорию
-        this.parsedType = Object.entries(this.units)
-          .find(([cat, arr]) => arr.includes(found))[0];
+      function showFullTargetList () {
+        /* Трюк: временно очищаем поле, чтобы браузер
+           открыл datalist целиком, затем восстанавливаем значение */
+        const v = targetUnit.value;
+        targetUnit.value = '';
+        // в следующем тике (event-loop) возвращаем
+        requestAnimationFrame(() => { targetUnit.value = v; });
+      }
 
-        // Если targetUnit не задан — подставим дефолт
-        if (!this.targetUnit) {
-          if (this.parsedType === 'temperature') {
-            this.targetUnit = 'K';
-          } else {
-            this.targetUnit = this.displaySymbol(
-              this.units[this.parsedType][0]
-            );
-          }
+      function onTargetTyped () {
+        if (!targetOptions.value.includes(targetUnit.value)) return;
+        /* нормализуем регистр (подсказки выдают lc) */
+        targetUnit.value = targetOptions.value.find(u =>
+          u.toLowerCase() === targetUnit.value.toLowerCase());
+      }
+
+      /* === dynSuggestions (заменяем существующую вычислилку) === */
+      const dynSuggestions = computed(() => {
+        const raw = inputText.value;
+        const m = raw.match(/^(.*?)([a-zA-Zа-яµ°]*)$/);   // prefix + token
+        if (!m) return [];
+
+        const prefix = m[1];                              // «5 »  или «»
+        const token  = (m[2] || '').toLowerCase();        // «k», «kg», …
+
+        if (!token) return [];
+
+        return unitsFlat.value
+          .filter(u => {
+            const pool = [sym(u), ...(u.aliases || [])].map(s => s.toLowerCase());
+            return pool.some(s => s.startsWith(token));
+          })
+          .map(u => ({
+            full : `${prefix}${sym(u)}`,   // ← value для datalist
+            name : name(u),
+            short: sym(u)
+          }))
+          .slice(0, 100);                  // защитимся от огромного списка
+      });
+
+
+      /* Если поле пустое и мы кликнули, показываем historyList */
+      function onLeftFocus () {
+        if (inputText.value.trim() === '') {
+          // Chrome/Edge показывают datalist только если value пуст,
+          // поэтому просто ничего не делаем – :list уже «historyList».
         }
-      },
+      }
 
-      convertToTarget(value, fromSym, toSym) {
-        if (this.parsedType === 'temperature') {
-          const table = tempConv[fromSym]?.(value);
-          return table?.[toSym] ?? null;
-        }
-        const arr = this.units[this.parsedType];
-        const from = arr.find(u => this.displaySymbol(u) === fromSym);
-        const to = arr.find(u => this.displaySymbol(u) === toSym);
-        if (!from || !to) return null;
-
-        return value * (from.factor / to.factor);
-      },
-
-      formatValue(type, val, unit) {
-        if (type === 'temperature') {
-          const table = tempConv[this.parsedUnit]?.(val);
-          const sym = this.displaySymbol(unit);
-          return (table && table[sym] != null)
-            ? bigFormat(table[sym])
-            : '';
-        }
-        // Иное (length, mass, time...)
-        const arr = this.units[type];
-        const base = arr.find(u => this.displaySymbol(u) === this.parsedUnit);
-        const converted = val * (base.factor / unit.factor);
-        return bigFormat(converted);
-      },
-
-      swapUnits() {
-        const tmp = this.targetUnit;
-        this.targetUnit = this.parsedUnit;
-        this.parsedUnit = tmp;
-        this.parseInput();
-      },
-
-      // Экспорт в Excel
-      exportToExcel() {
-        const ws = XLSX.utils.aoa_to_sheet([
-          [this.$t('unit'), this.$t('symbol'), this.$t('value')],
-          ...this.units[this.parsedType].map(u => [
-            this.displayName(u),
-            this.displaySymbol(u),
-            this.formatValue(this.parsedType, this.parsedValue, u)
+      /* === экспорт === */
+      function exportExcel() {
+        const ws = XLSXUtils.aoa_to_sheet([
+          ['Unit','Symbol','Value'],
+          ...unitsData[parsedType.value].map(u => [
+            name(u), sym(u),
+            bigFormat(convert(parsedValue.value, parsedUnit.value, sym(u)))
           ])
         ]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Data');
         XLSX.writeFile(wb, 'conversion.xlsx');
-      },
+      }
 
-      exportToPDF() {
+      function exportPDF () {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'landscape' });
+
+        // --- фиксированный английский шрифт/кегль ---
+        doc.setFont('helvetica');
         doc.setFontSize(12);
 
-        doc.text(
-          this.$t('result') + ': ' +
-          this.formattedConverted + ' ' + this.targetUnit,
-          14, 14
-        );
+        /* ---------- заголовок (тоже на EN) ---------- */
+        const title = `Result: ${formattedConverted.value} ${targetUnit.value}`;
+        doc.text(title, 14, 14);
 
-        let y = 24;
-        doc.text([
-          this.$t('unit'),
-          this.$t('symbol'),
-          this.$t('value')
-        ].join('   '), 14, y);
-
-        y += 6;
-        this.units[this.parsedType].forEach(u => {
-          doc.text([
-            this.displayName(u),
-            this.displaySymbol(u),
-            this.formatValue(this.parsedType, this.parsedValue, u)
-          ].join('   '), 14, y);
-          y += 6;
+        /* ---------- таблица ------------------------- */
+        doc.autoTable({
+          head: [['Unit', 'Symbol', 'Value']],       // <- статичный EN
+          body: unitsData[parsedType.value].map(u => [
+            u.names.en,                              // <- только English
+            u.symbol.en,
+            bigFormat(
+              convert(parsedValue.value, parsedUnit.value, u.symbol.en)
+            )
+          ]),
+          startY: 22,
+          styles: { font: 'helvetica', fontSize: 10 }
         });
 
         doc.save('conversion.pdf');
       }
-    },
 
-    watch: {
-      // При смене языка переключаем i18n
-      language(lang) {
-        i18n.global.locale = lang;
-        if (!this.parsedType) return;
 
-        // Пересчитываем символьные обозначения
-        const arr = this.units[this.parsedType];
-        const mapSym = (oldSym) => {
-          return arr.find(u =>
-            u.aliases?.includes(oldSym) ||
-            Object.values(u.symbol || {}).includes(oldSym)
-          );
-        };
+      /* === библиотека === */
+      async function loadLib() {
+        const res = await fetch(LIBRARY_PATH);
+        const buf = await res.arrayBuffer();
+        const wb  = XLSX.read(buf, { type: 'array' });
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSXUtils.sheet_to_json(ws, { defval: '' });
 
-        const foundParsed = mapSym(this.parsedUnit);
-        const foundTarget = mapSym(this.targetUnit);
-
-        if (foundParsed) this.parsedUnit = this.displaySymbol(foundParsed);
-        if (foundTarget) this.targetUnit = this.displaySymbol(foundTarget);
-      },
-
-      // Запись в историю
-      convertedValue(val) {
-        if (val == null) return;
-        const text = `${this.inputText} → ${bigFormat(val)} ${this.targetUnit}`;
-        this.history.unshift({ id: Date.now(), text });
-        if (this.history.length > MAX_HISTORY) {
-          this.history.pop();
-        }
+        if (tableInst) { tableInst.destroy(); tableInst = null; }
+        tableInst = new Tabulator(tableHolder.value, {
+          data,
+          layout:'fitDataStretch',
+          reactiveData:true,
+          pagination:'local', paginationSize:50,
+          columns: Object.keys(data[0] || {}).map(k => ({
+            title:k, field:k, headerFilter:'input', sorter:'alphanum'
+          })),
+          locale:language.value
+        });
       }
+
+      const downloadTable = (fmt) => {
+        if (!tableInst) return;
+        fmt === 'pdf'
+          ? tableInst.download('pdf','library.pdf',{orientation:'landscape'})
+          : tableInst.download(fmt,`library.${fmt}`);
+      };
+
+      /* === реакции === */
+      watch(language, l => {
+        i18n.global.locale.value = l;
+        tableInst && tableInst.setLocale(l);
+      });
+
+      watch(convertedValue, val => {
+        if (val == null) return;
+        history.value.unshift(inputText.value.trim());
+        history.value = history.value.slice(0, MAX_HISTORY);
+        localStorage.setItem('convHist', JSON.stringify(history.value));
+      });
+
+      onMounted(async () => { if (currentModule.value==='library') await loadLib(); });
+      watch(currentModule, async n => {
+        if (n === 'library') {
+          await loadLib();
+        } else if (tableInst) {
+          tableInst.destroy();
+          tableInst = null;
+        }
+      });
+
+      /* === отдаём в шаблон === */
+      return {
+        currentModule, modules,
+        language, languages,
+        inputText, targetUnit, special: SPECIAL_SYMBOLS,
+        parsedType, convertedValue, formattedConverted,
+        history, targetOptions, tableHolder, dynSuggestions,
+        unitsFlat, name, sym, displayNameBySym, onLeftFocus,
+        /* methods */
+        parseInput, swapUnits, appendSym, showFullTargetList, onTargetTyped,
+        exportExcel, exportPDF, downloadTable
+      };
     }
   });
 
-  // Подключаем i18n к приложению
-  app.use(i18n);
-  // Монтируем в #app (в index.html)
-  app.mount('#app');
+  app.use(i18n).mount('#app');
 });

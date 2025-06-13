@@ -1,5 +1,8 @@
 {
   "title": "محول الوحدات",
+  "converter": "المحول",
+  "library": "المكتبة",
+  "calculator": "الآلة الحاسبة",
   "example": "مثال 5 كم",
   "toUnit": "الوحدة الهدف",
   "result": "النتيجة",
@@ -8,5 +11,8 @@
   "value": "القيمة",
   "history": "السجل",
   "export_excel": "Excel",
-  "export_pdf": "PDF"
+  "export_pdf": "PDF",
+  "symbol_help": "رموز سريعة",
+  "calc_stub": "وحدة الآلة الحاسبة قيد التطوير…",
+  "case_note": "الأحرف حساسة لحالة الكتابة: \"k\" ≠ \"K\""
 }
