@@ -8,7 +8,9 @@ import unitsData from './unitsData.js';
  * ===================================================================== */
 const MAX_HISTORY     = 10;
 const SPECIAL_SYMBOLS = ['Ω', 'µ', '°', 'π', '×', '⁻¹'];
-const LIBRARY_PATH    = './data/raw/library.xlsx';
+// вычисляем «/Converter/» или «/» динамически
+const BASE = document.querySelector('base')?.href || window.location.pathname.replace(/\/[^/]*$/, '');
+const LIBRARY_PATH = `${BASE}/data/raw/library.xlsx`;
 
 /** Форматирует число для вывода */
 function bigFormat(n) {
@@ -339,6 +341,11 @@ loadMessages().then(() => {
       /* === библиотека === */
       async function loadLib() {
         const res = await fetch(LIBRARY_PATH);
+        if (!res.ok) {
+          console.error(`Library file not found: ${LIBRARY_PATH} (HTTP ${res.status})`);
+          alert(`Файл «library.xlsx» не найден. Проверьте, что он залит в GitHub Pages.`);
+          return; // выходим, не пытаемся читать
+        }
         const buf = await res.arrayBuffer();
         const wb  = XLSX.read(buf, { type: 'array' });
         const ws  = wb.Sheets[wb.SheetNames[0]];
