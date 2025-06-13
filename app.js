@@ -8,7 +8,7 @@ import unitsData from './unitsData.js';
  * ===================================================================== */
 const MAX_HISTORY     = 10;
 const SPECIAL_SYMBOLS = ['Ω', 'µ', '°', 'π', '×', '⁻¹'];
-const LIBRARY_PATH    = '/data/raw/library.xlsx';
+const LIBRARY_PATH    = './data/raw/library.xlsx';
 
 /** Форматирует число для вывода */
 function bigFormat(n) {
