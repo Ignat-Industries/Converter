@@ -1,7 +1,7 @@
 {
   "title": "单位换算器",
   "converter": "转换器",
-  "library": "库",
+  "library": "气体库",
   "calculator": "计算器",
   "example": "例如 5 km",
   "toUnit": "目标单位",
@@ -14,5 +14,19 @@
   "export_pdf": "PDF",
   "symbol_help": "快捷符号",
   "calc_stub": "计算器模块开发中…",
-  "case_note": "区分大小写：\"k\" ≠ \"K\""
+  "case_note": "区分大小写：\"k\" ≠ \"K\"",
+  "temp_unit": "显示温度单位为",
+  "col_Name":"名称",
+  "col_Acentricity":"偏心因子",
+  "col_Boiling Temperature":"沸点",
+  "col_Critical pressure":"临界压力",
+  "col_Critical temperature":"临界温度",
+  "col_Heat of Combustion":"燃烧热",
+  "col_Heat of Formation":"生成热",
+  "col_Molecular Weight":"分子量",
+  "col_Molar Volume":"摩尔体积",
+  "col_Mass Density (at 0°C or 273,15 K or 32°F)":"质量密度 (在 0°C 或 273.15 K 或 32°F)",
+  "col_Viscosity (at 0°C or 273,15 K or 32°F)":"粘度 (在 0°C 或 273.15 K 或 32°F)",
+  "col_Kinematic Viscosity (at 0°C or 273,15 K or 32°F)":"运动粘度 (在 0°C 或 273.15 K 或 32°F)",
+  "col_Cp/Cv (at 0°C or 273,15 K or 32°F)":"Cp/Cv (在 0°C 或 273.15 K 或 32°F)"
 }

@@ -1,7 +1,7 @@
 {
   "title": "Конвертер единиц",
   "converter": "Конвертер",
-  "library": "Библиотека",
+  "library": "Библиотека газов",
   "calculator": "Калькулятор",
   "example": "например 5 км",
   "toUnit": "Целевая единица",
@@ -14,5 +14,19 @@
   "export_pdf": "PDF",
   "symbol_help": "Быстрые символы",
   "calc_stub": "Модуль калькулятора в разработке…",
-  "case_note": "Регистр важен: \"k\" ≠ \"K\""
+  "case_note": "Регистр важен: \"k\" ≠ \"K\"",
+  "temp_unit": "Показывать температуру в",
+  "col_Name":"Название",
+  "col_Acentricity":"Ацентрический фактор",
+  "col_Boiling Temperature":"Температура кипения",
+  "col_Critical pressure":"Критическое давление",
+  "col_Critical temperature":"Критическая температура",
+  "col_Heat of Combustion":"Теплота сгорания",
+  "col_Heat of Formation":"Теплота образования",
+  "col_Molecular Weight":"Молекулярная масса",
+  "col_Molar Volume":"Молярный объём",
+  "col_Mass Density (at 0°C or 273,15 K or 32°F)":"Плотность (при 0 °C)",
+  "col_Viscosity (at 0°C or 273,15 K or 32°F)":"Вязкость (при 0 °C)",
+  "col_Kinematic Viscosity (at 0°C or 273,15 K or 32°F)":"Кинематическая вязкость (при 0 °C)",
+  "col_Cp/Cv (at 0°C or 273,15 K or 32°F)":"Cp/Cv (при 0 °C)"
 }

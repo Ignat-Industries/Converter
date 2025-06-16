@@ -64,6 +64,16 @@
     .table-actions{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-top:.8rem}
     .stub{text-align:center;font-size:1.3rem;padding:3rem 0}
     @media(max-width:700px){h1{font-size:1.6rem}.input-row input{min-width:210px}}
+    .top-scroll{
+        overflow-x:auto;
+        overflow-y:hidden;
+        height:14px;          /* высота самого скроллбара */
+        width:100%;
+        margin-bottom:2px;    /* маленький отступ над таблицей */
+        background:var(--table-bg);   /* тёмный фон как у таблицы */
+        border:1px solid var(--black);
+    }
+    .top-scroll::-webkit-scrollbar{height:14px}
   </style>
 </head>
 

@@ -17,5 +17,13 @@
     <orderEntry type="library" name="jspdf-autotable" level="application" />
     <orderEntry type="library" name="font-awesome" level="application" />
     <orderEntry type="library" name="tabulator-tables" level="application" />
+    <orderEntry type="library" name="vue" level="application" />
+    <orderEntry type="library" name="vue-i18n" level="application" />
+    <orderEntry type="library" name="mathjs" level="application" />
+    <orderEntry type="library" name="jspdf" level="application" />
+    <orderEntry type="library" name="tabulator-tables" level="application" />
+    <orderEntry type="library" name="xlsx" level="application" />
+    <orderEntry type="library" name="jspdf-autotable" level="application" />
+    <orderEntry type="library" name="font-awesome" level="application" />
   </component>
 </module>

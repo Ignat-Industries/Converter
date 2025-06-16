@@ -1,7 +1,7 @@
 {
   "title": "Conversor de Unidades",
   "converter": "Conversor",
-  "library": "Biblioteca",
+  "library": "Biblioteca de Gases",
   "calculator": "Calculadora",
   "example": "p. ej. 5 km",
   "toUnit": "Unidad destino",
@@ -14,5 +14,19 @@
   "export_pdf": "PDF",
   "symbol_help": "Símbolos rápidos",
   "calc_stub": "Módulo de calculadora en desarrollo…",
-  "case_note": "Mayúsculas y minúsculas distinguen: \"k\" ≠ \"K\""
+  "case_note": "Mayúsculas y minúsculas distinguen: \"k\" ≠ \"K\"",
+  "temp_unit": "Mostrar temperaturas en",
+  "col_Name":"Nombre",
+  "col_Acentricity":"Acentricidad",
+  "col_Boiling Temperature":"Temperatura de ebullición",
+  "col_Critical pressure":"Presión crítica",
+  "col_Critical temperature":"Temperatura crítica",
+  "col_Heat of Combustion":"Calor de Combustión",
+  "col_Heat of Formation":"Calor de Formación",
+  "col_Molecular Weight":"Peso Molecular",
+  "col_Molar Volume":"Volumen Molar",
+  "col_Mass Density (at 0°C or 273,15 K or 32°F)":"Densidad de Masa (a 0°C o 273,15 K o 32°F)",
+  "col_Viscosity (at 0°C or 273,15 K or 32°F)":"Viscosidad (a 0°C o 273,15 K o 32°F)",
+  "col_Kinematic Viscosity (at 0°C or 273,15 K or 32°F)":"Viscosidad Cinemática (a 0°C o 273,15 K o 32°F)",
+  "col_Cp/Cv (at 0°C or 273,15 K or 32°F)":"Cp/Cv (a 0°C o 273,15 K o 32°F)"
 }
