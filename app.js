@@ -3,6 +3,14 @@
 import { i18n, loadMessages, supportedLangs } from './i18n.js';
 import unitsData from './unitsData.js';
 
+/* ==================================================================== */
+/*  Г Л О Б А Л Ь Н Ы Е                                                  */
+/* ==================================================================== */
+let engHeader       = [];     // EN-заголовок              (init в loadLib)
+let headerTranslate = null;   // строка-перевод            (init в loadLib)
+let headerUnitsBase = null;   // строка единиц БЕЗ select  (init в loadLib)
+let headerRowsCount = 1;      // сколько «служебных» строк (init в loadLib)
+
 /* =======================================================================
  *  У Т И Л И Т Ы
  * ===================================================================== */
@@ -92,8 +100,7 @@ loadMessages().then(() => {
                  :placeholder="$t('toUnit')"
                  @focus="showFullTargetList"
                  @input="onTargetTyped" />
-          
-          
+
           <datalist id="target-suggestions">
             <option v-for="u in targetOptions" :value="u">
               {{ displayNameBySym(u) }} ({{ u }})
@@ -118,7 +125,7 @@ loadMessages().then(() => {
         <datalist id="historyList">
           <option v-for="h in history" :value="h"></option>
         </datalist>
-        
+
         <datalist id="dyn-suggestions">
           <option v-for="opt in dynSuggestions"
                   :key="opt.full"
@@ -126,7 +133,7 @@ loadMessages().then(() => {
             {{ opt.name }} ({{ opt.short }})
           </option>
         </datalist>
-        
+
         <datalist id="unit-suggestions">
            <template v-for="unit in unitsFlat">
               <!-- главный символ -->
@@ -142,23 +149,22 @@ loadMessages().then(() => {
            </template>
         </datalist>
 
-        
         <p class="note">{{ $t('case_note') }}</p>
       </template>
 
       <!-- ================= Б И Б Л И О Т Е К А ================ -->
       <template v-else-if="currentModule==='library'">
-        <!-- верхний горизонтальный скролл -->
-        <div class="top-scroll" ref="topScroll"></div>
-        <!-- сама таблица -->
-        <div class="table-holder" ref="tableHolder"></div>
+        <div class="table-wrap">
+          <div id="my-table" class="table-holder" ref="tableHolder"></div>
+        </div>
+
         <div class="table-actions">
           <button class="btn" @click="downloadTable('xlsx')">{{ $t('export_excel') }}</button>
           <button class="btn" @click="downloadTable('pdf')">{{ $t('export_pdf') }}</button>
           <button class="btn" @click="downloadTable('csv')">CSV</button>
         </div>
       </template>
-      
+
       <!-- ================= К А Л Ь К У Л Я Т О Р ============== -->
       <template v-else>
         <div class="stub">
@@ -170,7 +176,6 @@ loadMessages().then(() => {
 
     /* ----------------- Л О Г И К А -------------------------- */
     setup() {
-      /* ----------- глобальные объекты XLSX ------------------ */
       /** @type {import('xlsx').utils} */
       const XLSXUtils = XLSX.utils;
 
@@ -196,12 +201,10 @@ loadMessages().then(() => {
 
       /* ----------- библиотека --------------- */
       const tableHolder = ref(null);
-      const tempUnit    = ref('°C');          // новая реактивная переменная
-      const topScroll   = ref(null);
+      const tempUnit    = ref('°C');
       const TEMP_COLS   = ['Boiling Temperature','Critical temperature'];
       /** @type {Tabulator | null} */ let tableInst = null;
-      let rawTableDataC = [];                 // хранит «исходные» °C для пересчёта
-      let headerRowsCount = 1;
+      let rawTableDataC = [];
 
       /* === вычисления === */
       const targetOptions = computed(() =>
@@ -218,7 +221,6 @@ loadMessages().then(() => {
       );
 
       /* === helpers === */
-
       const displayNameBySym = symb => {
         const flat = Object.values(unitsData).flat();
         const u = flat.find(x => sym(x) === symb);
@@ -227,7 +229,7 @@ loadMessages().then(() => {
 
       const name = u => u.names?.[language.value]  || u.names.en;
       const sym  = u => u.symbol?.[language.value] || u.symbol.en;
-      const appendSym = (s) => { inputText.value += s; };
+      const appendSym = s => { inputText.value += s; };
       const unitsFlat = computed(() => Object.values(unitsData).flat());
 
       function parseInput() {
@@ -240,20 +242,19 @@ loadMessages().then(() => {
 
         const token = m[2].toLowerCase();
         const flat  = Object.values(unitsData).flat();
-        const found = flat.find(u => u.aliases?.includes(token)) || flat.find(u => sym(u).toLowerCase() === token);
+        const found = flat.find(u => u.aliases?.includes(token)) ||
+                      flat.find(u => sym(u).toLowerCase() === token);
         if (!found) { parsedType.value = ''; return; }
 
         parsedValue.value = val;
         parsedUnit.value  = sym(found);
         parsedType.value  = Object.entries(unitsData).find(([, arr]) => arr.includes(found))[0];
 
-        // Если user стёр «km» и набрал «kg» → меняем список targetOptions.
-        // Если старая цель не входит в новый список — сбрасываем её.
         const allowed = unitsData[parsedType.value].map(u => sym(u));
         if (!allowed.includes(targetUnit.value)) {
           targetUnit.value = parsedType.value === 'temperature'
             ? 'K'
-            : allowed[0]; // первая единица новой системы
+            : allowed[0];
         }
       }
 
@@ -272,31 +273,38 @@ loadMessages().then(() => {
         parseInput();
       };
 
+      /** формирует объект-строку из engHeader -> {colName: value} */
+      const buildNameRow = () =>
+        Object.fromEntries(engHeader.map(col => [col, col]));
+
+      /** фиксирует первые 2 или 3 строки (имена / единицы / перевод) */
+      function freezeStaticRows() {
+        if (!tableInst) return;
+        const rows  = tableInst.getRows();
+        const count = headerRowsCount;              // 2 или 3
+        rows.slice(0, count).forEach(r => r.freeze());
+      }
+
       function showFullTargetList () {
-        /* Трюк: временно очищаем поле, чтобы браузер
-           открыл datalist целиком, затем восстанавливаем значение */
         const v = targetUnit.value;
         targetUnit.value = '';
-        // в следующем тике (event-loop) возвращаем
         requestAnimationFrame(() => { targetUnit.value = v; });
       }
 
       function onTargetTyped () {
         if (!targetOptions.value.includes(targetUnit.value)) return;
-        /* нормализуем регистр (подсказки выдают lc) */
         targetUnit.value = targetOptions.value.find(u =>
           u.toLowerCase() === targetUnit.value.toLowerCase());
       }
 
-      /* === dynSuggestions (заменяем существующую вычислилку) === */
+      /* === dynSuggestions === */
       const dynSuggestions = computed(() => {
         const raw = inputText.value;
-        const m = raw.match(/^(.*?)([a-zA-Zа-яµ°]*)$/);   // prefix + token
+        const m = raw.match(/^(.*?)([a-zA-Zа-яµ°]*)$/);
         if (!m) return [];
 
-        const prefix = m[1];                              // «5 »  или «»
-        const token  = (m[2] || '').toLowerCase();        // «k», «kg», …
-
+        const prefix = m[1];
+        const token  = (m[2] || '').toLowerCase();
         if (!token) return [];
 
         return unitsFlat.value
@@ -305,20 +313,15 @@ loadMessages().then(() => {
             return pool.some(s => s.startsWith(token));
           })
           .map(u => ({
-            full : `${prefix}${sym(u)}`,   // ← value для datalist
+            full : `${prefix}${sym(u)}`,
             name : name(u),
             short: sym(u)
           }))
-          .slice(0, 100);                  // защитимся от огромного списка
+          .slice(0, 100);
       });
 
-
-      /* Если поле пустое и мы кликнули, показываем historyList */
       function onLeftFocus () {
-        if (inputText.value.trim() === '') {
-          // Chrome/Edge показывают datalist только если value пуст,
-          // поэтому просто ничего не делаем – :list уже «historyList».
-        }
+        /* historyList показывается автоматически, если value == '' */
       }
 
       /* === экспорт === */
@@ -338,24 +341,17 @@ loadMessages().then(() => {
       function exportPDF () {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'landscape' });
-
-        // --- фиксированный английский шрифт/кегль ---
         doc.setFont('helvetica');
         doc.setFontSize(12);
-
-        /* ---------- заголовок (тоже на EN) ---------- */
         const title = `Result: ${formattedConverted.value} ${targetUnit.value}`;
         doc.text(title, 14, 14);
 
-        /* ---------- таблица ------------------------- */
         doc.autoTable({
-          head: [['Unit', 'Symbol', 'Value']],       // <- статичный EN
+          head: [['Unit', 'Symbol', 'Value']],
           body: unitsData[parsedType.value].map(u => [
-            u.names.en,                              // <- только English
+            u.names.en,
             u.symbol.en,
-            bigFormat(
-              convert(parsedValue.value, parsedUnit.value, u.symbol.en)
-            )
+            bigFormat(convert(parsedValue.value, parsedUnit.value, u.symbol.en))
           ]),
           startY: 22,
           styles: { font: 'helvetica', fontSize: 10 }
@@ -364,150 +360,158 @@ loadMessages().then(() => {
         doc.save('conversion.pdf');
       }
 
-      /* ---------- синхронизация скроллов -------------------------- */
-      function syncScrollbars () {
-        const bot = tableHolder.value?.querySelector('.tabulator-tableHolder');
-        const top = topScroll.value;
-        if (!bot || !top) return;                     // ждём, пока Tabulator построится
-
-        /* прокладка для переполнения */
-        top.innerHTML =
-          `<div style="width:${bot.scrollWidth}px;height:1px"></div>`;
-
-        const sync = e =>
-          (e.target === bot)
-            ? (top.scrollLeft = bot.scrollLeft)
-            : (bot.scrollLeft = top.scrollLeft);
-
-        bot.removeEventListener('scroll', sync);
-        top.removeEventListener('scroll', sync);
-        bot.addEventListener('scroll', sync, { passive: true });
-        top.addEventListener('scroll', sync, { passive: true });
-
-        /* гарантируем повтор через 1 тик ─ теперь bot.scrollWidth уже финальный */
-        requestAnimationFrame(() => {
-          if (document.body.contains(top)) syncScrollbars();
-        });
-      }
-
-      /* === библиотека === */
+      /* ======================  Б И Б Л И О Т Е К А  ======================= */
       async function loadLib () {
-        /* ---------- загрузка файла ---------------------------------- */
+        await nextTick();                                            // дождаться DOM-mount
+
+        /* ---------- читаем Excel -------------------------------------------------- */
         const res = await fetch(LIBRARY_PATH);
-        if (!res.ok) {
-          alert('Файл «library.xlsx» не найден.');
-          return;
-        }
+        if (!res.ok) { alert('Файл «library.xlsx» не найден.'); return; }
+
         const buf = await res.arrayBuffer();
         const wb  = XLSX.read(buf, { type: 'array' });
         const ws  = wb.Sheets[wb.SheetNames[0]];
 
-        /* ---------- разбор строк листа ------------------------------ */
-        const rows = XLSXUtils.sheet_to_json(ws, { header: 1, defval: '' });
-        const [engHeader, unitRowRaw, ...rawData] = rows;
+        /* ---------- разбираем строки --------------------------------------------- */
+        const rows      = XLSXUtils.sheet_to_json(ws, { header: 1, defval: '' });
+        const hdrRaw    = rows[0];                 // 1-я строка → заголовок (c unit в скобках)
+        const dataRaw   = rows.slice(1);           // остальное – данные
 
-        /* ---------- будет ли перевод заголовка? ---------------------- */
+        /* ---------- вспомогалки --------------------------------------------------- */
+        const toObj = arr => Object.fromEntries(arr.map((v, i) => [hdrRaw[i], v]));
+        const TEMP_COLS = ['Boiling Temperature', 'Critical temperature'];   // «базовые» имена
+
+        /* карта выбранных шкал для каждого t-столбца */
+        const tempUnits = {};
+        hdrRaw.forEach(h => {
+          const base  = h.replace(/\s*\(.*$/, '').trim();
+          const match = h.match(/\(([^)]+)\)/);
+          if (TEMP_COLS.includes(base)) tempUnits[h] = match ? match[1] : '°C';
+        });
+
+        /* ---------- исходный набор (всегда °C) ----------------------------------- */
+        rawTableDataC = dataRaw.map(toObj);
+
+        /* ---------- конвертация строки в выбранные единицы ----------------------- */
+        const convertRow = src => {
+          const row = { ...src };
+          Object.keys(tempUnits).forEach(col => {
+            const v   = parseFloat(src[col]);
+            const unt = tempUnits[col];            // «°C» / «K» / «°F»
+            row[col]  = Number.isFinite(v)
+              ? bigFormat(unt === '°C' ? v : tempConv['°C'](v)[unt])
+              : src[col];
+          });
+          return row;
+        };
+
+        /* ---------- данные для рендера ------------------------------------------- */
+        const tableData = rawTableDataC.map(convertRow);
+
+        /* ---------- заголовки: текст + <select> для T-столбцов ------------------- */
         const showTrans = language.value !== 'en';
-        headerRowsCount = showTrans ? 2 : 1;    // запоминаем
-        const t         = i18n.global;
-        const trHeader  = engHeader.map(col => t.t(`col_${col}`, col));
+        const columns   = hdrRaw.map(col => {
+          const base    = col.replace(/\s*\(.*$/, '').trim();          // «Boiling Temperature»
+          const isTemp  = TEMP_COLS.includes(base);
+          const trans   = showTrans ? i18n.global.t(`col_${base}`, base) : base;
 
-        /* ---------- строка единиц (селект для температур) ----------- */
-        const unitRow = engHeader.map(col =>
-          TEMP_COLS.includes(col)
-            ? `<select class="tempSel">
-                 <option value="°C">°C</option>
-                 <option value="K">K</option>
-                 <option value="°F">°F</option>
-               </select>`
-            : unitRowRaw[engHeader.indexOf(col)]
-        );
+          let titleHTML = trans;                                       // «Boiling Temperature»
+          if (isTemp) {
+            const sel = value => `<option value="${value}"${tempUnits[col]===value?' selected':''}>${value}</option>`;
+            titleHTML += ` <select class="unitSel" data-col="${col}">
+                             ${sel('°C')}${sel('K')}${sel('°F')}
+                           </select>`;
+          } else {
+            const m = col.match(/\(([^)]+)\)/);                        // другие юниты «(bar)» и т.д.
+            if (m) titleHTML += ` (${m[1]})`;
+          }
 
-        /* ---------- массивы → объекты ------------------------------- */
-        const toObj = arr => Object.fromEntries(arr.map((v, i) => [engHeader[i], v]));
-        rawTableDataC = rawData.map(toObj);          // сырец в °C
-
-        /* ---------- объединяем служебные + данные ------------------- */
-        let data = [toObj(unitRow), ...rawTableDataC];
-        if (showTrans) data.unshift(toObj(trHeader));
-
-        /* ---------- пересоздаём Tabulator ---------------------------- */
-        if (tableInst) tableInst.destroy();
-
-        tableInst = new Tabulator(tableHolder.value, {
-          data,
-          layout: 'fitDataStretch',
-          reactiveData: true,
-          pagination: 'local',
-          paginationSize: 50,
-          locale: language.value,
-          columns: engHeader.map(k => ({
-            title: k,
-            field: k,
+          return {
+            title: titleHTML,
+            field: col,
             headerFilter: 'input',
             sorter: 'alphanum',
             formatter: 'html'
-          })),
-
-          /**  ---------- ВСЁ, что раньше было в tableInst.on('tableBuilt') ---------- */
-          tableBuilt() {
-            /* фиксируем служебные строки */
-            const rows = this.getRows();
-            if (showTrans) rows[0]?.freeze();          // перевод
-            rows[showTrans ? 1 : 0]?.freeze();         // единицы
-
-            /* селекты °C / K / °F */
-            tableHolder.value
-              .querySelectorAll('.tempSel')
-              .forEach(sel => {
-                sel.value    = tempUnit.value;               // актуальная шкала
-                sel.onchange = e => (tempUnit.value = e.target.value);
-              });
-
-            /* «прокладка» + синхронизация скроллов */
-            syncScrollbars();
-          }
+          };
         });
 
-        /* ---------- синхронизация скроллов -------------------------- */
-        const syncScrollbars = () => {
-          const bot = tableHolder.value.querySelector('.tabulator-tableHolder');
-          const top = topScroll.value;
-          if (!bot || !top) return;
+        /* ---------- создаём/пересоздаём Tabulator -------------------------------- */
+        tableInst?.destroy();
+        tableInst = new Tabulator(tableHolder.value, {
+          data          : tableData,
+          columns,
+          layout        : 'fitDataStretch',
+          reactiveData  : true,
+          pagination    : 'local',
+          paginationSize: 50,
+          locale        : language.value,
+          tableBuilt() {
+            /* ---- вешаем обработчики на <select> в заголовках ---- */
+            tableHolder.value.querySelectorAll('.unitSel').forEach(sel => {
+              sel.addEventListener('click', e => e.stopPropagation());   // не триггерим сортировку
+              sel.onchange = e => {
+                const col    = e.target.dataset.col;
+                tempUnits[col] = e.target.value;
 
-          /* подгоняем ширину «прокладки» под фактическую ширину таблицы */
-          top.innerHTML = `<div style="width:${bot.scrollWidth}px;height:1px"></div>`;
-
-          const sync = e => {
-            if (e.target === bot) top.scrollLeft = bot.scrollLeft;
-            else                  bot.scrollLeft = top.scrollLeft;
-          };
-          bot.removeEventListener('scroll', sync);   // страховка от дубликатов
-          top.removeEventListener('scroll', sync);
-          bot.addEventListener('scroll', sync, { passive: true });
-          top.addEventListener('scroll', sync, { passive: true });
-        };
-
-        /* ---------- после полной отрисовки -------------------------- */
-        return new Promise(resolve => {
-          tableInst.on('tableBuilt', () => {
-            /* фиксируем строки */
-            if (showTrans) tableInst.getRows()[0]?.freeze();
-            tableInst.getRows()[showTrans ? 1 : 0]?.freeze();
-
-            /* селекты в строке единиц */
-            tableHolder.value.querySelectorAll('.tempSel').forEach(sel => {
-              sel.value = tempUnit.value;
-              sel.onchange = e => (tempUnit.value = e.target.value);
+                /* пересчёт только изменившегося столбца */
+                const newData = tableInst.getData().map((row, idx) => {
+                  const srcVal = rawTableDataC[idx][col];
+                  const v      = parseFloat(srcVal);
+                  row[col]     = Number.isFinite(v)
+                    ? bigFormat(tempUnits[col] === '°C' ? v
+                                : tempConv['°C'](v)[tempUnits[col]])
+                    : srcVal;
+                  return row;
+                });
+                tableInst.replaceData(newData);                         // мгновенно обновляем
+              };
             });
-
-            syncScrollbars();   // ← один-единственный вызов
-            resolve();          // <- «готово»
-          });
+          }
         });
       }
 
-      const downloadTable = (fmt) => {
+
+      function makeUnitRow (unit = '°C') {
+        return engHeader.reduce((row, col) => {
+          row[col] = TEMP_COLS.includes(col)
+            ? `<select class="tempSel">
+                 <option value="°C" ${unit==='°C'?'selected':''}>°C</option>
+                 <option value="K"  ${unit==='K' ?'selected':''}>K</option>
+                 <option value="°F" ${unit==='°F'?'selected':''}>°F</option>
+               </select>`
+            : headerUnitsBase[col];
+          return row;
+        }, {});
+      }
+
+      async function applyTempUnit(unit = tempUnit.value) {
+        if (!tableInst || engHeader.length === 0) return;
+
+        /* конвертируем сырой массив °C → unit */
+        const conv = v => {
+          const n = parseFloat(v);
+          return Number.isFinite(n) ? bigFormat(tempConv['°C'](n)[unit]) : v;
+        };
+        const dataConverted = rawTableDataC.map(obj => {
+          const row = { ...obj };
+          TEMP_COLS.forEach(col => (row[col] = conv(row[col])));
+          return row;
+        });
+
+        /* собираем новый data-массив в том же порядке */
+        const data = [buildNameRow(), makeUnitRow(unit)];
+        if (headerTranslate) data.push(headerTranslate);
+        data.push(...dataConverted);
+
+        await tableInst.replaceData(data);
+        freezeStaticRows();                               // ← снова фиксируем
+
+        tableHolder.value.querySelectorAll('.tempSel')
+          .forEach(sel => sel.onchange =
+            e => (tempUnit.value = e.target.value));
+      }
+
+      const downloadTable = fmt => {
         if (!tableInst) return;
         fmt === 'pdf'
           ? tableInst.download('pdf','library.pdf',{orientation:'landscape'})
@@ -520,36 +524,11 @@ loadMessages().then(() => {
         tableInst?.setLocale(l);
 
         if (currentModule.value === 'library') {
-          await loadLib();          // дождёмся новой таблицы
-          applyTempUnit();          // и только потом конвертируем °C → выбранная
+          await loadLib();
+          await applyTempUnit();
         }
       });
 
-      function applyTempUnit(unit = tempUnit.value){
-        if (!tableInst) return;
-
-        const conv = v => {
-          const n = parseFloat(v);
-          return Number.isNaN(n) ? v : bigFormat(tempConv['°C'](n)[unit]);
-        };
-
-        /* строим НОВЫЙ массив, rawTableDataC не изменяем */
-        const data = rawTableDataC.map(obj => {
-          const row = { ...obj };
-          TEMP_COLS.forEach(c => { row[c] = conv(row[c]); });
-          return row;
-        });
-
-        const hdr = tableInst.getData().slice(0, headerRowsCount);
-        tableInst.replaceData([...hdr, ...data]);
-
-        /* селекты + прокрутка */
-        tableHolder.value.querySelectorAll('.tempSel')
-          .forEach(sel => { sel.value = unit; });
-        syncScrollbars();
-      }
-
-      /* --- реагируем на смену шкалы температуры --- */
       watch(tempUnit, unit => applyTempUnit(unit));
 
       watch(convertedValue, val => {
@@ -559,7 +538,10 @@ loadMessages().then(() => {
         localStorage.setItem('convHist', JSON.stringify(history.value));
       });
 
-      onMounted(async () => { if (currentModule.value==='library') await loadLib(); });
+      onMounted(async () => {
+        if (currentModule.value === 'library') await loadLib();
+      });
+
       watch(currentModule, async n => {
         if (n === 'library') {
           await loadLib();
@@ -576,7 +558,7 @@ loadMessages().then(() => {
         inputText, targetUnit, special: SPECIAL_SYMBOLS,
         parsedType, convertedValue, formattedConverted,
         history, targetOptions, tableHolder, dynSuggestions,
-        unitsFlat, topScroll, tempUnit,
+        unitsFlat, tempUnit,
         name, sym, displayNameBySym, onLeftFocus,
         /* methods */
         parseInput, swapUnits, appendSym, showFullTargetList, onTargetTyped,
