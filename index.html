@@ -59,7 +59,20 @@
     .table-actions{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-top:.8rem}
     .stub{text-align:center;font-size:1.3rem;padding:3rem 0}
     @media(max-width:700px){h1{font-size:1.6rem}.input-row input{min-width:210px}}
+    /* мини-селектор шкалы температуры в заголовке таблицы */
+    .unitSel{
+      font-size: .7rem;        /* меньше шрифт */
+      padding   : 1px 4px;     /* убираем лишний отступ вокруг символа */
+      height    : auto;        /* пусть подстраивается под контент */
+      line-height: 1;          /* без лишних «воздуха» сверху/снизу */
+      vertical-align: middle;  /* выравниваем по центру текста заголовка */
 
+      /* необязательно, но поможет выдержать стиль интерфейса */
+      background  : var(--black);
+      color       : var(--gold);
+      border      : 1px solid var(--gold);
+      border-radius: 4px;
+    }
     /* библиотека */
     .table-wrap{position:relative}
     .table-holder{overflow:auto}

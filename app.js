@@ -443,7 +443,7 @@ loadMessages().then(() => {
           layout        : 'fitDataStretch',
           reactiveData  : true,
           pagination    : 'local',
-          paginationSize: 50,
+          paginationSize: 25,
           locale        : language.value,
           tableBuilt() {
             /* ---- вешаем обработчики на <select> в заголовках ---- */
