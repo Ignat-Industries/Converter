@@ -25,8 +25,9 @@
   "col_Heat of Formation":"生成热",
   "col_Molecular Weight":"分子量",
   "col_Molar Volume":"摩尔体积",
-  "col_Mass Density (at 0°C or 273,15 K or 32°F)":"质量密度 (在 0°C 或 273.15 K 或 32°F)",
-  "col_Viscosity (at 0°C or 273,15 K or 32°F)":"粘度 (在 0°C 或 273.15 K 或 32°F)",
-  "col_Kinematic Viscosity (at 0°C or 273,15 K or 32°F)":"运动粘度 (在 0°C 或 273.15 K 或 32°F)",
-  "col_Cp/Cv (at 0°C or 273,15 K or 32°F)":"Cp/Cv (在 0°C 或 273.15 K 或 32°F)"
+  "col_Mass Density":"质量密度",
+  "col_Viscosity":"粘度",
+  "col_Kinematic Viscosity":"运动粘度",
+  "col_Cp/Cv":"Cp/Cv",
+  "tooltip_0C": "在 0 °C 或 273.15 K 或 32 °F"
 }

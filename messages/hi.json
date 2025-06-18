@@ -25,8 +25,9 @@
   "col_Heat of Formation":"गठन की ऊष्मा",
   "col_Molecular Weight":"आणविक भार",
   "col_Molar Volume":"मोलर आयतन",
-  "col_Mass Density (at 0°C or 273,15 K or 32°F)":"द्रव्यमान घनत्व (0°C या 273.15 K या 32°F पर)",
-  "col_Viscosity (at 0°C or 273,15 K or 32°F)":"श्यानता (0°C या 273.15 K या 32°F पर)",
-  "col_Kinematic Viscosity (at 0°C or 273,15 K or 32°F)":"गतिज श्यानता (0°C या 273.15 K या 32°F पर)",
-  "col_Cp/Cv (at 0°C or 273,15 K or 32°F)":"Cp/Cv (0°C या 273.15 K या 32°F पर)"
+  "col_Mass Density":"द्रव्यमान घनत्व",
+  "col_Viscosity":"श्यानता",
+  "col_Kinematic Viscosity":"गतिज श्यानता",
+  "col_Cp/Cv":"Cp/Cv",
+  "tooltip_0C": "0 °C या 273.15 K या 32 °F पर"
 }

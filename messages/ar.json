@@ -25,8 +25,9 @@
   "col_Heat of Formation":"حرارة التكوين",
   "col_Molecular Weight":"الوزن الجزيئي",
   "col_Molar Volume":"الحجم المولي",
-  "col_Mass Density (at 0°C or 273,15 K or 32°F)":"الكثافة الكتلية (عند 0 درجة مئوية أو 273.15 كلفن أو 32 درجة فهرنهايت)",
-  "col_Viscosity (at 0°C or 273,15 K or 32°F)":"اللزوجة (عند 0 درجة مئوية أو 273.15 كلفن أو 32 درجة فهرنهايت)",
-  "col_Kinematic Viscosity (at 0°C or 273,15 K or 32°F)":"اللزوجة الحركية (عند 0 درجة مئوية أو 273.15 كلفن أو 32 درجة فهرنهايت)",
-  "col_Cp/Cv (at 0°C or 273,15 K or 32°F)":"Cp/Cv (عند 0 درجة مئوية أو 273.15 كلفن أو 32 درجة فهرنهايت)"
+  "col_Mass Density":"الكثافة الكتلية",
+  "col_Viscosity":"اللزوجة",
+  "col_Kinematic Viscosity":"اللزوجة الحركية",
+  "col_Cp/Cv":"Cp/Cv",
+  "tooltip_0C": "عند 0°م أو 273.15 ك أو 32°ف"
 }

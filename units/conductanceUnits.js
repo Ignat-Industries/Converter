@@ -8,7 +8,7 @@ const conductanceUnits = [
       zh:'西门子', pt:'siemens', ar:'سيمنز', hi:'साइमेंस', ja:'ジーメンス' },
     { en:'S', ru:'См', es:'S', de:'S', fr:'S', zh:'S', pt:'S',
       ar:'S', hi:'S', ja:'S' },
-    1, ['s','см','siemens']
+    1, ['s','siemens']
   ),
 
   makeUnit(

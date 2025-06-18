@@ -25,8 +25,9 @@
   "col_Heat of Formation":"Bildungswärme",
   "col_Molecular Weight":"Molekulargewicht",
   "col_Molar Volume":"Molares Volumen",
-  "col_Mass Density (at 0°C or 273,15 K or 32°F)":"Massendichte (bei 0°C oder 273,15 K oder 32°F)",
-  "col_Viscosity (at 0°C or 273,15 K or 32°F)":"Viskosität (bei 0°C oder 273,15 K oder 32°F)",
-  "col_Kinematic Viscosity (at 0°C or 273,15 K or 32°F)":"Kinematische Viskosität (bei 0°C oder 273,15 K oder 32°F)",
-  "col_Cp/Cv (at 0°C or 273,15 K or 32°F)":"Cp/Cv (bei 0°C oder 273,15 K oder 32°F)"
+  "col_Mass Density":"Massendichte",
+  "col_Viscosity":"Viskosität",
+  "col_Kinematic Viscosity":"Kinematische Viskosität",
+  "col_Cp/Cv":"Cp/Cv",
+  "tooltip_0C": "bei 0 °C oder 273,15 K oder 32 °F"
 }
