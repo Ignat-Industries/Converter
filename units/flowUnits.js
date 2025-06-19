@@ -1,5 +1,5 @@
 /* flowUnits.js  — объёмная скорость (м³/с) */
-import { makeUnit } from './_factory.js';
+import { makeUnit } from './factory.js';
 
 /**
  * Порядок языков в объектах names / symbol:

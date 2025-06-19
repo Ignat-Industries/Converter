@@ -1,4 +1,4 @@
-import { makeUnit } from './_factory.js';
+import { makeUnit } from './factory.js';
 
 const timeUnits = [
     /* секунда (база) ------------------------------------------------------- */

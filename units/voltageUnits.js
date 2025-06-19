@@ -1,5 +1,5 @@
 /* voltageUnits.js — напряжение (1 В = 1 m²·kg·s⁻³·A⁻¹) */
-import { makeUnit } from './_factory.js';
+import { makeUnit } from './factory.js';
 
 export default [
   /* базовая единица ----------------------------------------------------- */

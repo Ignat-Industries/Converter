@@ -3,7 +3,7 @@
 //  Все единицы длины в одном месте.             ©2025 Ignat-Industries
 // -----------------------------------------------------------------------------
 
-import { makeUnit } from './_factory.js';
+import { makeUnit } from './factory.js';
 
 /**
  * Экспортируем массив lengthUnits,

@@ -1,4 +1,4 @@
-// src/units/_factory.js
+// src/units/factory.js
 /**
  * Фабрика единой структуры для любой физической единицы.
  *

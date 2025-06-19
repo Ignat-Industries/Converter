@@ -1,5 +1,5 @@
 /* Давление (Pa – база) */
-import { makeUnit } from './_factory.js';   // если фабрика лежит отдельно
+import { makeUnit } from './factory.js';   // если фабрика лежит отдельно
 
 const pressureUnits = [
   makeUnit(

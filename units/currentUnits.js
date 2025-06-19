@@ -1,5 +1,5 @@
 /* currentUnits.js — электрический ток (А) */
-import { makeUnit } from './_factory.js';
+import { makeUnit } from './factory.js';
 
 const currentUnits = [
     /* секунда (база) ------------------------------------------------------- */

@@ -1,5 +1,5 @@
 /* conductanceUnits.js — электрическая проводимость (См) */
-import { makeUnit } from './_factory.js';
+import { makeUnit } from './factory.js';
 
 const conductanceUnits = [
     /* секунда (база) ------------------------------------------------------- */

@@ -1,5 +1,5 @@
 /* temperatureUnits.js */
-import { makeUnit } from './_factory.js';
+import { makeUnit } from './factory.js';
 
 export default [
   /* Kelvin, Celsius, Fahrenheit уже есть – оставляем */
