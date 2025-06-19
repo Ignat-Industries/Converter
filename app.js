@@ -23,10 +23,15 @@ const BASE         = document.querySelector('base')?.href
 const LIBRARY_PATH = `${BASE}/data/raw/library.xlsx`;
 
 /* =================================================================== */
-/* 1. общий паттерн для захвата символа/алиаса в конце строки          */
-/*    латиница, кириллица, градус, микро, + точка, пробел, кругл. скоб */
+/* 1. PATTERN для символа единицы                                      */
+/*    — латиница  a-zA-Z                                               */
+/*    — базовая кириллица  а-яА-Я                                       */
+/*    — греческие буквы   α-ωΑ-Ω                                       */
+/*    — спец-знаки      µ°Ωπ×·²³⁻                                      */
+/*    — цифры, пробел, точка, скобки, слэш                             */
 /* =================================================================== */
-const REGEX_TOKEN = /([a-zA-Zа-яА-Яµ°.\s()]+)$/;
+const REGEX_TOKEN_PATTERN =
+  '([a-zA-Zа-яА-Яα-ωΑ-Ωµ°Ωπ×·0-9²³⁻/().\\s]+)$';
 
 /* ==================================================================== */
 /*  U T I L S                                                           */
@@ -227,17 +232,18 @@ loadMessages().then(() => {
         ? bigFormat(convertedValue.value)
         : '');
 
+      /* =================================================================== */
+      /* 2. динамические подсказки                                            */
+      /* =================================================================== */
       const dynSuggestions = computed(() => {
-        const m = inputText.value.match(new RegExp(`^(.*?)${REGEX_TOKEN.source}`));
+        const m = inputText.value.match(new RegExp(`^(.*?)${REGEX_TOKEN_PATTERN}`));
         if (!m) return [];
 
         const prefix = m[1];
-        const token  = (m[2] || '').toLowerCase().trim();   // «ч.», «ч. л», …
-
+        const token  = (m[2] || '').toLowerCase().trim();
         if (!token) return [];
 
         return unitsFlat.value
-          // сравниваем в нижнем регистре, чтобы «Ч.» тоже нашлось
           .filter(u => allKeys(u, true).some(k => k.startsWith(token)))
           .map(u => ({
             full : `${prefix}${u.symbol[language.value] || u.symbol.en}`,
@@ -258,9 +264,12 @@ loadMessages().then(() => {
 
       const appendSym = s=>{inputText.value+=s;};
 
+      /* =================================================================== */
+      /* 3.  разбор левого поля (число + исходная единица)                    */
+      /* =================================================================== */
       function parseInput () {
         const m = inputText.value.trim()
-                    .match(new RegExp(`^(.+?)\\s*${REGEX_TOKEN.source}`));
+                    .match(new RegExp(`^(.+?)\\s*${REGEX_TOKEN_PATTERN}`));
         if (!m) { parsedType.value = ''; return; }
 
         /* ---------- число ------------------------------------------------- */
@@ -268,34 +277,30 @@ loadMessages().then(() => {
         try { val = math.evaluate(m[1]); }
         catch { parsedType.value = ''; return; }
 
-        /* ---------- символ / алиас --------------------------------------- */
-        const tokenRaw   = m[2].trim();           // «ч. лож.» / «gal (US)» / …
+        /* ---------- символ ------------------------------------------------ */
+        const tokenRaw   = m[2].trim();               // «ч. лож.», «Ω·м⁻¹», …
         const tokenLower = tokenRaw.toLowerCase();
+        const flat       = unitsFlat.value;
 
-        /* ---------- поиск ------------------------------------------------- */
-        const flat = unitsFlat.value;
-
-        // 1) точное совпадение (учитываем регистр, точки, пробелы)
+        // 1️⃣ точное совпадение (регистр важен)
         let found = flat.find(u => allKeys(u).includes(tokenRaw));
 
-        // 2) fallback: нечувствительный к регистру поиск
+        // 2️⃣ fallback: нечувствительный к регистру поиск
         if (!found)
           found = flat.find(u => allKeys(u, true).includes(tokenLower));
 
         if (!found) { parsedType.value = ''; return; }
 
-        /* ---------- сохранить результат ---------------------------------- */
         parsedValue.value = val;
         parsedUnit.value  = found.symbol.en;
         parsedType.value  = Object.keys(unitsData)
                            .find(k => unitsData[k].includes(found));
 
-        /* ---------- подстроить правую единицу, если нужно ---------------- */
         const allowed = unitsData[parsedType.value]
                           .map(u => u.symbol[language.value] || u.symbol.en);
-
         if (!allowed.includes(targetUnit.value))
-          targetUnit.value = parsedType.value === 'temperature' ? 'K' : allowed[0];
+          targetUnit.value = parsedType.value === 'temperature' ? 'K'
+                                                                : allowed[0];
       }
 
       function convert(v, fromSym, toSym){
@@ -311,19 +316,21 @@ loadMessages().then(() => {
         return f&&t? v*(f.factor/t.factor) : null;
       }
 
+      /* =================================================================== */
+      /* 4.  кнопка «обменять» (↔)                                            */
+      /* =================================================================== */
       const swapUnits = () => {
-        // используем тот же REGEX_TOKEN, что и в parseInput
         const m = inputText.value.trim()
-                  .match(new RegExp(`^(.+?)\\s*${REGEX_TOKEN.source}`));
+                  .match(new RegExp(`^(.+?)\\s*${REGEX_TOKEN_PATTERN}`));
         if (!m) return;
 
-        const num  = m[1];           // числовая часть
-        const from = m[2].trim();    // символ слева целиком, включая точки/скобки
+        const num  = m[1];            // числовая часть
+        const from = m[2].trim();     // оригинальный символ (с точками, °, …)
 
-        /* 1. меняем символы местами прямо в строке ввода */
+        /* 1. вставляем правый символ налево */
         inputText.value = `${num} ${targetUnit.value}`;
 
-        /* 2. в правое поле переносим прежний левый символ */
+        /* 2. переносим прежний левый символ направо */
         targetUnit.value = from;
 
         /* 3. пересчитываем результат */
